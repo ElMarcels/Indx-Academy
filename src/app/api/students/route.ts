@@ -52,13 +52,13 @@ export async function GET(req: NextRequest) {
         where: { contactId: myId, status: 'PENDING' },
         include: { owner: { select: { id: true, name: true, email: true, image: true } } },
       });
-      pendingReceived = received.map((r) => ({ id: r.id, ...r.owner }));
+      pendingReceived = received.map((r) => ({ contactId: r.id, ...r.owner }));
 
       const sent = await prisma.contact.findMany({
         where: { userId: myId, status: 'PENDING' },
         include: { contact: { select: { id: true, name: true, email: true, image: true } } },
       });
-      pendingSent = sent.map((s) => ({ id: s.id, ...s.contact }));
+      pendingSent = sent.map((s) => ({ contactId: s.id, ...s.contact }));
     }
 
     return NextResponse.json({ users: filteredUsers, pendingReceived, pendingSent });
