@@ -243,10 +243,10 @@ export default function DashboardPage() {
                       </div>
                     </div>
                     <Certificate
-                      certificateId={cert.id}
+                      courseId={cert.courseId || cert.id}
+                      courseTitle={cert.course?.title || ''}
                       userName={session?.user?.name || ''}
-                      courseName={cert.course?.title || ''}
-                      issuedAt={cert.issuedAt}
+                      completionDate={cert.completedAt || cert.issuedAt || ''}
                       certificateNumber={cert.certificateNumber}
                     />
                   </div>
