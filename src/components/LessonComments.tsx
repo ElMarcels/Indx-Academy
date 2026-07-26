@@ -150,7 +150,7 @@ export function LessonComments({ lessonId }: LessonCommentsProps) {
           <div className="flex gap-3">
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-500/20 to-accent-500/20 border border-brand-500/20 flex items-center justify-center flex-shrink-0">
               <span className="text-sm font-semibold text-brand-400">
-                {getInitials(session.user?.name as string, session.user?.email)}
+                {getInitials(session.user?.name as string || null, session.user?.email || null)}
               </span>
             </div>
             <div className="flex-1">
@@ -272,7 +272,7 @@ export function LessonComments({ lessonId }: LessonCommentsProps) {
                         <div className="flex gap-3">
                           <div className="w-7 h-7 rounded-full bg-gradient-to-br from-brand-500/20 to-accent-500/20 border border-brand-500/20 flex items-center justify-center flex-shrink-0">
                             <span className="text-xs font-semibold text-brand-400">
-                              {getInitials(session?.user?.name as string, session?.user?.email)}
+                              {getInitials(session?.user?.name as string || null, session?.user?.email || null)}
                             </span>
                           </div>
                           <div className="flex-1">
