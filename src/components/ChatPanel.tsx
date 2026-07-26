@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { FiSend, FiMessage, FiUsers, FiChevronDown } from 'react-icons/fi';
+import { FiSend, FiMessageSquare, FiUsers, FiChevronDown } from 'react-icons/fi';
 
 interface Message {
   id: string;
@@ -86,7 +86,7 @@ export function ChatPanel({ groupId }: ChatProps) {
   return (
     <div className="card flex flex-col h-96">
       <div className="p-4 border-b border-dark-800/50 flex items-center gap-2">
-        <FiMessage size={16} className="text-brand-400" />
+        <FiMessageSquare size={16} className="text-brand-400" />
         <h3 className="font-semibold text-white text-sm">
           {groupId ? 'Chat del Grupo' : 'Chat General'}
         </h3>
