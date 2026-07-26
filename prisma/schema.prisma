@@ -69,6 +69,7 @@ model User {
   receivedMessages Message[]          @relation("ReceivedMessages")
   groupMemberships GroupMembership[]
   createdCourses   Course[]           @relation("CourseAuthor")
+  createdGroups    Group[]
   contacts         Contact[]          @relation("ContactOwner")
   contactOf        Contact[]          @relation("ContactTarget")
 }
