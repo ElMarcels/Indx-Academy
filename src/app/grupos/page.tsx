@@ -7,7 +7,7 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import {
   FiUsers, FiPlus, FiTrash2, FiShield, FiUserPlus, FiChevronDown, FiChevronUp,
-  FiMessageSquare, FiSettings, FiUserMinus, FiStar,
+  FiMessageSquare, FiSettings, FiUserMinus, FiStar, FiPhone, FiVideo, FiPhoneOff,
 } from 'react-icons/fi';
 import { ChatPanel } from '@/components/ChatPanel';
 
@@ -45,10 +45,56 @@ export default function GroupsPage() {
   const [showInvite, setShowInvite] = useState<string | null>(null);
   const [inviteSearch, setInviteSearch] = useState('');
   const [myRole, setMyRole] = useState<string>('MEMBER');
+  const [activeCall, setActiveCall] = useState<{ id: string; groupId: string; type: string; startedAt: string } | null>(null);
+  const [callTimer, setCallTimer] = useState(0);
 
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (!activeCall) return;
+    setCallTimer(0);
+    const interval = setInterval(() => setCallTimer((t) => t + 1), 1000);
+    return () => clearInterval(interval);
+  }, [activeCall]);
+
+  function formatCallTime(seconds: number) {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  async function startCall(groupId: string, type: 'AUDIO' | 'VIDEO') {
+    try {
+      const res = await fetch('/api/calls', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ groupId, type }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setActiveCall({ id: data.call.id, groupId, type, startedAt: new Date().toISOString() });
+        toast.success(`Llamada ${type === 'VIDEO' ? 'de video' : 'de audio'} iniciada`);
+      } else {
+        toast.error('Error al iniciar llamada');
+      }
+    } catch {
+      toast.error('Error al iniciar llamada');
+    }
+  }
+
+  async function endCall() {
+    if (!activeCall) return;
+    try {
+      await fetch(`/api/calls/${activeCall.id}`, { method: 'PUT' });
+      setActiveCall(null);
+      setCallTimer(0);
+      toast.success('Llamada finalizada');
+    } catch {
+      toast.error('Error al finalizar llamada');
+    }
+  }
 
   async function loadData() {
     try {
@@ -211,6 +257,26 @@ export default function GroupsPage() {
 
   return (
     <div className="py-12">
+      {activeCall && (
+        <div className="fixed inset-0 z-50 bg-dark-950/95 backdrop-blur-xl flex flex-col items-center justify-center">
+          <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center">
+            <div className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 ${
+              activeCall.type === 'VIDEO' ? 'bg-gradient-to-br from-blue-500/30 to-blue-600/20' : 'bg-gradient-to-br from-green-500/30 to-green-600/20'
+            }`}>
+              {activeCall.type === 'VIDEO' ? <FiVideo size={40} className="text-blue-400" /> : <FiPhone size={40} className="text-green-400" />}
+            </div>
+            <p className="text-white text-xl font-semibold mb-1">Llamada {activeCall.type === 'VIDEO' ? 'de Video' : 'de Audio'}</p>
+            <p className="text-dark-400 text-sm mb-2">En curso...</p>
+            <p className="text-brand-400 text-2xl font-mono font-bold mb-8">{formatCallTime(callTimer)}</p>
+            <div className="flex items-center gap-3 justify-center">
+              <button onClick={endCall} className="w-14 h-14 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center transition-colors">
+                <FiPhoneOff size={22} className="text-white" />
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
       <div className="section max-w-4xl">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <div className="flex items-center justify-between mb-6">
@@ -279,6 +345,12 @@ export default function GroupsPage() {
                         <span className="badge-blue text-[10px]">
                           <FiUsers size={10} className="mr-1" /> {group._count.members}
                         </span>
+                        {activeCall && activeCall.groupId === group.id && (
+                          <span className="flex items-center gap-1 text-[10px] text-green-400 animate-pulse">
+                            <span className="w-1.5 h-1.5 bg-green-400 rounded-full" />
+                            {activeCall.type === 'VIDEO' ? <FiVideo size={10} /> : <FiPhone size={10} />}
+                          </span>
+                        )}
                         {expandedGroup === group.id ? <FiChevronUp size={16} className="text-dark-400" /> : <FiChevronDown size={16} className="text-dark-400" />}
                       </div>
                     </div>
@@ -293,6 +365,27 @@ export default function GroupsPage() {
                         className="overflow-hidden"
                       >
                         <div className="border-t border-dark-800/50 p-4">
+                          {/* Call controls */}
+                          <div className="flex items-center gap-2 mb-4">
+                            <button
+                              onClick={() => startCall(group.id, 'AUDIO')}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-green-500/10 text-green-400 hover:bg-green-500/20 text-sm font-medium transition-colors"
+                            >
+                              <FiPhone size={14} /> Llamada
+                            </button>
+                            <button
+                              onClick={() => startCall(group.id, 'VIDEO')}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 text-sm font-medium transition-colors"
+                            >
+                              <FiVideo size={14} /> Video
+                            </button>
+                            {activeCall && activeCall.groupId === group.id && (
+                              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-green-500/20 text-green-400 text-sm animate-pulse">
+                                <span className="w-2 h-2 bg-green-400 rounded-full" /> En llamada &middot; {formatCallTime(callTimer)}
+                              </span>
+                            )}
+                          </div>
+
                           {/* Group chat */}
                           <div className="mb-4">
                             <ChatPanel groupId={group.id} />

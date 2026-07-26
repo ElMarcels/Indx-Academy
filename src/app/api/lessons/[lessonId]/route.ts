@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(
@@ -16,6 +18,9 @@ export async function GET(
           },
         },
         files: true,
+        terminalCommands: {
+          orderBy: { order: 'asc' },
+        },
       },
     });
 
@@ -38,10 +43,29 @@ export async function GET(
       return a.order - b.order;
     });
 
+    let completedLessons: string[] = [];
+    const session = await getServerSession(authOptions);
+    if (session?.user?.email) {
+      const user = await prisma.user.findUnique({ where: { email: session.user.email } });
+      if (user) {
+        const progress = await prisma.lessonProgress.findMany({
+          where: {
+            userId: user.id,
+            completed: true,
+            lesson: {
+              module: { courseId: lesson.module.course.id },
+            },
+          },
+          select: { lessonId: true },
+        });
+        completedLessons = progress.map((p) => p.lessonId);
+      }
+    }
+
     return NextResponse.json({
       lesson,
       allLessons: sortedLessons,
-      completed: false,
+      completedLessons,
     });
   } catch {
     return NextResponse.json({ error: 'Error del servidor' }, { status: 500 });

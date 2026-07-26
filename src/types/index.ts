@@ -172,3 +172,136 @@ export interface AdminStats {
     course: { title: string };
   }[];
 }
+
+// ─── Code Exercise Types ────────────────────────────────
+export interface CodeExercise {
+  id: string;
+  title: string;
+  description: string;
+  language: string;
+  starterCode: string | null;
+  solution: string | null;
+  testCases: { input: string; expected: string; description: string }[];
+  difficulty: string;
+  points: number;
+}
+
+// ─── Terminal Types ─────────────────────────────────────
+export interface TerminalCommand {
+  id: string;
+  command: string;
+  description: string | null;
+  output: string;
+  explanation: string | null;
+  order: number;
+}
+
+// ─── Forum Types ────────────────────────────────────────
+export interface ForumPost {
+  id: string;
+  title: string;
+  content: string;
+  isPinned: boolean;
+  isResolved: boolean;
+  userId: string;
+  user: { name: string | null; image: string | null };
+  _count: { replies: number };
+  createdAt: string;
+}
+
+export interface ForumReply {
+  id: string;
+  content: string;
+  userId: string;
+  user: { name: string | null; image: string | null };
+  createdAt: string;
+}
+
+// ─── Glossary Types ─────────────────────────────────────
+export interface GlossaryTerm {
+  id: string;
+  term: string;
+  definition: string;
+  example: string | null;
+  category: string | null;
+}
+
+// ─── Certificate Types ──────────────────────────────────
+export interface Certificate {
+  id: string;
+  certificateNumber: string;
+  completedAt: string;
+  course: { title: string; slug: string };
+}
+
+// ─── Learning Path Types ────────────────────────────────
+export interface LearningPath {
+  id: string;
+  title: string;
+  description: string | null;
+  thumbnail: string | null;
+  level: string;
+  courses: {
+    order: number;
+    course: {
+      id: string;
+      title: string;
+      slug: string;
+      thumbnail: string | null;
+      level: string;
+      _count: { enrollments: number };
+    };
+  }[];
+}
+
+// ─── Notification Types ─────────────────────────────────
+export interface UserNotification {
+  id: string;
+  title: string;
+  message: string;
+  type: string;
+  link: string | null;
+  read: boolean;
+  createdAt: string;
+}
+
+// ─── Peer Match Types ───────────────────────────────────
+export interface PeerMatch {
+  id: string;
+  peerId: string;
+  status: string;
+  message: string | null;
+  peer: { name: string | null; image: string | null; bio: string | null };
+  createdAt: string;
+}
+
+// ─── Call Types ─────────────────────────────────────────
+export interface CallSession {
+  id: string;
+  type: string;
+  status: string;
+  callerId: string;
+  caller: { name: string | null };
+  startedAt: string;
+}
+
+// ─── Comment Types ──────────────────────────────────────
+export interface CommentWithReplies {
+  id: string;
+  content: string;
+  userId: string;
+  user: { name: string | null; image: string | null };
+  createdAt: string;
+  replies: CommentWithReplies[];
+}
+
+// ─── Course Template Types ──────────────────────────────
+export interface CourseTemplate {
+  id: string;
+  name: string;
+  description: string | null;
+  fileName: string;
+  fileUrl: string;
+  fileSize: number | null;
+  language: string | null;
+}

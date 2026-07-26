@@ -1,17 +1,28 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import dynamic from 'next/dynamic';
 import toast from 'react-hot-toast';
 import {
-  FiCheck, FiArrowLeft, FiArrowRight, FiClock, FiFileText,
-  FiDownload, FiBookOpen, FiClipboard, FiChevronDown, FiChevronRight, FiMenu, FiX,
+  FiCheck, FiArrowLeft, FiArrowRight, FiFileText,
+  FiDownload, FiBookOpen, FiClipboard, FiCode, FiTerminal,
+  FiMessageSquare, FiLoader,
 } from 'react-icons/fi';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import { QuizComponent } from '@/components/QuizComponent';
+import { CourseSidebar } from '@/components/CourseSidebar';
+import { CodeExercise as CodeExerciseComponent } from '@/components/CodeExercise';
+import { VirtualTerminal } from '@/components/VirtualTerminal';
+import { LessonComments } from '@/components/LessonComments';
+import type { CodeExercise as CodeExerciseType, TerminalCommand } from '@/types';
+
+const CodeEditor = dynamic(
+  () => import('@/components/CodeEditor').then((m) => m.CodeEditor),
+  { ssr: false }
+);
 
 interface LessonFile {
   id: string;
@@ -35,6 +46,7 @@ interface Lesson {
     quizzes: { id: string; title: string }[];
   };
   files: LessonFile[];
+  terminalCommands: TerminalCommand[];
 }
 
 interface CourseModule {
@@ -60,9 +72,12 @@ export default function LessonPage() {
   const [allLessons, setAllLessons] = useState<AllLesson[]>([]);
   const [courseModules, setCourseModules] = useState<CourseModule[]>([]);
   const [completed, setCompleted] = useState(false);
+  const [completedLessons, setCompletedLessons] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
+  const [exercises, setExercises] = useState<CodeExerciseType[]>([]);
+  const [exercisesLoading, setExercisesLoading] = useState(false);
+  const [pdfGenerating, setPdfGenerating] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -72,15 +87,35 @@ export default function LessonPage() {
           const data = await res.json();
           setLesson(data.lesson);
           setAllLessons(data.allLessons);
-          setCompleted(data.completed);
+          setCompletedLessons(data.completedLessons || []);
+          setCompleted((data.completedLessons || []).includes(data.lesson?.id));
 
           if (data.lesson?.module?.course?.id) {
             const courseRes = await fetch(`/api/courses/${data.lesson.module.course.id}/modules`);
             if (courseRes.ok) {
               const courseData = await courseRes.json();
               setCourseModules(courseData.modules || []);
-              const currentModuleId = data.lesson.module.id;
-              setExpandedModules(new Set([currentModuleId]));
+            }
+          }
+
+          if (data.lesson?.id) {
+            setExercisesLoading(true);
+            try {
+              const exRes = await fetch(`/api/exercises?lessonId=${data.lesson.id}`);
+              if (exRes.ok) {
+                const exData = await exRes.json();
+                const parsed = (exData.exercises || []).map((ex: Record<string, unknown>) => ({
+                  ...ex,
+                  testCases: typeof ex.testCases === 'string'
+                    ? JSON.parse(ex.testCases as string)
+                    : ex.testCases || [],
+                }));
+                setExercises(parsed as CodeExerciseType[]);
+              }
+            } catch {
+              // Exercises not available
+            } finally {
+              setExercisesLoading(false);
             }
           }
         }
@@ -93,16 +128,7 @@ export default function LessonPage() {
     load();
   }, [params.lessonId]);
 
-  function toggleModule(moduleId: string) {
-    setExpandedModules((prev) => {
-      const next = new Set(prev);
-      if (next.has(moduleId)) next.delete(moduleId);
-      else next.add(moduleId);
-      return next;
-    });
-  }
-
-  async function toggleComplete() {
+  const toggleComplete = useCallback(async () => {
     if (!session) { router.push('/login'); return; }
     try {
       const res = await fetch('/api/progress', {
@@ -112,12 +138,15 @@ export default function LessonPage() {
       });
       if (res.ok) {
         setCompleted(!completed);
+        setCompletedLessons((prev) =>
+          completed ? prev.filter((id) => id !== lesson!.id) : [...prev, lesson!.id]
+        );
         toast.success(completed ? 'Lección marcada como incompleta' : '¡Lección completada!');
       }
     } catch {
       toast.error('Error al actualizar progreso');
     }
-  }
+  }, [session, completed, lesson, router]);
 
   function getAdjacentLesson(direction: 'prev' | 'next') {
     const currentIndex = allLessons.findIndex((l) => l.id === lesson?.id);
@@ -131,6 +160,74 @@ export default function LessonPage() {
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / 1048576).toFixed(1) + ' MB';
+  }
+
+  async function handleDownloadPDF() {
+    if (!lesson?.content) return;
+    setPdfGenerating(true);
+    try {
+      const { jsPDF } = await import('jspdf');
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margin = 20;
+      const maxWidth = pageWidth - margin * 2;
+      let y = margin;
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(18);
+      doc.setTextColor(30, 30, 30);
+      const titleLines = doc.splitTextToSize(lesson.title, maxWidth);
+      doc.text(titleLines, margin, y);
+      y += titleLines.length * 8 + 6;
+
+      if (lesson.description) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(11);
+        doc.setTextColor(100, 100, 100);
+        const descLines = doc.splitTextToSize(lesson.description, maxWidth);
+        doc.text(descLines, margin, y);
+        y += descLines.length * 5 + 8;
+      }
+
+      doc.setDrawColor(200, 200, 200);
+      doc.line(margin, y, pageWidth - margin, y);
+      y += 8;
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(11);
+      doc.setTextColor(40, 40, 40);
+
+      const plainText = lesson.content
+        .replace(/#{1,6}\s/g, '')
+        .replace(/\*\*(.*?)\*\*/g, '$1')
+        .replace(/\*(.*?)\*/g, '$1')
+        .replace(/`(.*?)`/g, '$1')
+        .replace(/```[\s\S]*?```/g, '[código]')
+        .replace(/\[(.*?)\]\(.*?\)/g, '$1')
+        .replace(/^\s*[-*+]\s/gm, '• ');
+
+      const paragraphs = plainText.split(/\n\n+/);
+      for (const para of paragraphs) {
+        const trimmed = para.trim();
+        if (!trimmed) continue;
+
+        if (y > doc.internal.pageSize.getHeight() - margin) {
+          doc.addPage();
+          y = margin;
+        }
+
+        const lines = doc.splitTextToSize(trimmed, maxWidth);
+        doc.text(lines, margin, y);
+        y += lines.length * 5 + 4;
+      }
+
+      doc.save(`${lesson.title.replace(/[^a-zA-Z0-9áéíóúñÁÉÍÓÚÑ ]/g, '').replace(/\s+/g, '_')}.pdf`);
+      toast.success('PDF descargado');
+    } catch {
+      toast.error('Error al generar PDF');
+    } finally {
+      setPdfGenerating(false);
+    }
   }
 
   if (loading) {
@@ -157,74 +254,20 @@ export default function LessonPage() {
   const prevLesson = getAdjacentLesson('prev');
   const nextLesson = getAdjacentLesson('next');
   const courseSlug = lesson.module.course.slug;
+  const hasTerminalCommands = lesson.terminalCommands && lesson.terminalCommands.length > 0;
 
   return (
     <div className="min-h-screen">
       <div className="flex">
-        {/* Course Sidebar */}
-        <aside className={`hidden lg:block ${sidebarOpen ? 'w-72' : 'w-0'} transition-all duration-300 overflow-hidden flex-shrink-0`}>
-          <div className="w-72 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto border-r border-dark-800/50 bg-dark-950/80 p-4">
-            <Link href={`/cursos/${courseSlug}`} className="inline-flex items-center gap-1 text-dark-400 hover:text-white text-sm mb-4 transition-colors">
-              <FiArrowLeft size={14} /> Volver al curso
-            </Link>
-            <h3 className="text-white font-semibold text-sm mb-4">{lesson.module.course.title}</h3>
-            <div className="space-y-1">
-              {courseModules.map((mod) => {
-                const isExpanded = expandedModules.has(mod.id);
-                const isCurrentModule = mod.id === lesson.module.id;
-                return (
-                  <div key={mod.id}>
-                    <button
-                      onClick={() => toggleModule(mod.id)}
-                      className={`w-full flex items-center gap-2 p-2 rounded-lg text-left text-sm transition-colors ${
-                        isCurrentModule ? 'bg-brand-600/15 text-brand-400' : 'text-dark-300 hover:bg-dark-800/50 hover:text-white'
-                      }`}
-                    >
-                      {isExpanded ? <FiChevronDown size={12} /> : <FiChevronRight size={12} />}
-                      <span className="truncate font-medium">{mod.title}</span>
-                    </button>
-                    {isExpanded && (
-                      <div className="ml-4 space-y-0.5">
-                        {mod.lessons.map((l) => {
-                          const isCurrent = l.id === lesson.id;
-                          return (
-                            <Link
-                              key={l.id}
-                              href={`/cursos/${courseSlug}/leccion/${l.id}`}
-                              className={`flex items-center gap-2 p-1.5 rounded-lg text-xs transition-colors ${
-                                isCurrent
-                                  ? 'bg-brand-600/15 text-brand-400 font-semibold'
-                                  : 'text-dark-400 hover:text-white hover:bg-dark-800/30'
-                              }`}
-                            >
-                              {isCurrent && <div className="w-1.5 h-1.5 bg-brand-400 rounded-full flex-shrink-0" />}
-                              {!isCurrent && <FiFileText size={10} className="flex-shrink-0" />}
-                              <span className="truncate">{l.title}</span>
-                            </Link>
-                          );
-                        })}
-                        {mod.quizzes.map((q) => (
-                          <div key={q.id} className="flex items-center gap-2 p-1.5 rounded-lg text-xs text-dark-500">
-                            <FiClipboard size={10} className="flex-shrink-0" />
-                            <span className="truncate">{q.title}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </aside>
-
-        {/* Mobile sidebar toggle */}
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="lg:hidden fixed bottom-4 left-4 z-50 w-12 h-12 bg-brand-600 rounded-full flex items-center justify-center shadow-lg shadow-brand-600/30"
-        >
-          {sidebarOpen ? <FiX size={20} className="text-white" /> : <FiMenu size={20} className="text-white" />}
-        </button>
+        <CourseSidebar
+          courseTitle={lesson.module.course.title}
+          courseSlug={courseSlug}
+          currentLessonId={lesson.id}
+          modules={courseModules}
+          completedLessons={completedLessons}
+          isOpen={sidebarOpen}
+          onToggle={() => setSidebarOpen(!sidebarOpen)}
+        />
 
         {/* Main content */}
         <div className="flex-1 min-w-0">
@@ -239,7 +282,7 @@ export default function LessonPage() {
               {lesson.description && (
                 <p className="text-dark-400 text-lg">{lesson.description}</p>
               )}
-              <div className="flex items-center gap-3 mt-4">
+              <div className="flex items-center gap-3 mt-4 flex-wrap">
                 <button
                   onClick={toggleComplete}
                   className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${
@@ -251,6 +294,17 @@ export default function LessonPage() {
                   <FiCheck size={16} />
                   {completed ? 'Completada' : 'Marcar como completada'}
                 </button>
+
+                {lesson.content && (
+                  <button
+                    onClick={handleDownloadPDF}
+                    disabled={pdfGenerating}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-dark-800/80 text-dark-300 border border-dark-700/50 hover:border-accent-500/50 hover:text-accent-400 transition-all duration-300 disabled:opacity-50"
+                  >
+                    {pdfGenerating ? <FiLoader size={16} className="animate-spin" /> : <FiDownload size={16} />}
+                    Descargar PDF
+                  </button>
+                )}
               </div>
             </div>
 
@@ -285,6 +339,71 @@ export default function LessonPage() {
               </div>
             )}
 
+            {/* Code Exercises */}
+            {exercises.length > 0 && (
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-4 text-accent-400">
+                  <FiCode size={18} />
+                  <h2 className="font-semibold text-lg">Ejercicios de Código</h2>
+                </div>
+                <div className="space-y-6">
+                  {exercises.map((exercise) => (
+                    <CodeExerciseComponent
+                      key={exercise.id}
+                      exercise={exercise}
+                      onComplete={(exerciseId, passed) => {
+                        toast.success(passed
+                          ? `Ejercicio "${exercise.title}" completado`
+                          : `Intento registrado para "${exercise.title}"`
+                        );
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {exercisesLoading && (
+              <div className="mb-6">
+                <div className="card p-6 flex items-center gap-3">
+                  <FiLoader size={16} className="animate-spin text-dark-500" />
+                  <span className="text-dark-400 text-sm">Cargando ejercicios...</span>
+                </div>
+              </div>
+            )}
+
+            {/* Code Editor */}
+            {exercises.length > 0 && (
+              <div className="mb-6">
+                <div className="card p-6">
+                  <div className="flex items-center gap-2 mb-4 text-emerald-400">
+                    <FiCode size={18} />
+                    <h2 className="font-semibold text-lg">Editor de Código</h2>
+                  </div>
+                  <p className="text-dark-400 text-sm mb-4">
+                    Practica libremente con el editor de código. Selecciona el lenguaje y ejecuta tu código.
+                  </p>
+                  <CodeEditor height="350px" />
+                </div>
+              </div>
+            )}
+
+            {/* Virtual Terminal */}
+            {hasTerminalCommands && (
+              <div className="mb-6">
+                <div className="card p-6">
+                  <div className="flex items-center gap-2 mb-4 text-emerald-400">
+                    <FiTerminal size={18} />
+                    <h2 className="font-semibold text-lg">Terminal Virtual</h2>
+                  </div>
+                  <p className="text-dark-400 text-sm mb-4">
+                    Prueba los comandos de la lección en la terminal virtual. Escribe los comandos listados para ver sus resultados.
+                  </p>
+                  <VirtualTerminal commands={lesson.terminalCommands} />
+                </div>
+              </div>
+            )}
+
             {/* Attached Files */}
             {lesson.files && lesson.files.length > 0 && (
               <div className="card p-8 mb-6">
@@ -315,6 +434,14 @@ export default function LessonPage() {
                 </div>
               </div>
             )}
+
+            {/* Comments */}
+            <div className="mb-6">
+              <div className="flex items-center gap-2 mb-4 text-brand-400">
+                <FiMessageSquare size={18} />
+              </div>
+              <LessonComments lessonId={lesson.id} />
+            </div>
           </div>
 
           {/* Bottom Navigation */}

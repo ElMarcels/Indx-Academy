@@ -5,9 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { FiBook, FiClock, FiArrowRight, FiStar, FiAward, FiUsers } from 'react-icons/fi';
+import { FiBook, FiClock, FiArrowRight, FiStar, FiAward, FiUsers, FiDownload } from 'react-icons/fi';
 import { ProgressBar } from '@/components/ProgressBar';
 import { AchievementList } from '@/components/AchievementList';
+import { LearningPaths } from '@/components/LearningPaths';
+import { RecommendedCourses } from '@/components/RecommendedCourses';
+import { Certificate } from '@/components/Certificate';
 
 interface EnrolledCourse {
   id: string;
@@ -30,7 +33,9 @@ export default function DashboardPage() {
   const [enrollments, setEnrollments] = useState<EnrolledCourse[]>([]);
   const [progressMap, setProgressMap] = useState<Record<string, { completed: number; total: number }>>({});
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'courses' | 'achievements'>('courses');
+  const [activeTab, setActiveTab] = useState<'courses' | 'achievements' | 'paths' | 'certificates' | 'recommended'>('courses');
+  const [certificates, setCertificates] = useState<any[]>([]);
+  const [certificatesLoaded, setCertificatesLoaded] = useState(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -53,6 +58,15 @@ export default function DashboardPage() {
     }
     if (status === 'authenticated') load();
   }, [status]);
+
+  useEffect(() => {
+    if (activeTab === 'certificates' && !certificatesLoaded && (session?.user as any)?.id) {
+      fetch(`/api/certificates?userId=${(session?.user as any).id}`)
+        .then((res) => res.json())
+        .then((data) => { setCertificates(data.certificates || []); setCertificatesLoaded(true); })
+        .catch(() => setCertificatesLoaded(true));
+    }
+  }, [activeTab, certificatesLoaded, session]);
 
   if (status === 'loading' || loading) {
     return (
@@ -84,8 +98,8 @@ export default function DashboardPage() {
           {[
             { icon: FiBook, label: 'Cursos', value: enrollments.length, color: 'from-brand-500 to-brand-600' },
             { icon: FiClock, label: 'Lecciones', value: Object.values(progressMap).reduce((a, b) => a + b.completed, 0), color: 'from-emerald-500 to-emerald-600' },
-            { icon: FiAward, label: 'Logros', value: '-', color: 'from-yellow-500 to-yellow-600' },
-            { icon: FiUsers, label: 'Grupos', value: '-', color: 'from-accent-500 to-accent-600' },
+            { icon: FiAward, label: 'Certificados', value: certificates.length || '-', color: 'from-yellow-500 to-yellow-600' },
+            { icon: FiClock, label: 'Rutas', value: '-', color: 'from-accent-500 to-accent-600' },
           ].map((s, i) => (
             <motion.div key={s.label} className="card p-4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
               <div className="flex items-center gap-2 mb-2">
@@ -100,7 +114,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Tabs */}
-        <div className="flex items-center gap-2 mb-6">
+        <div className="flex items-center gap-2 mb-6 flex-wrap">
           <button
             onClick={() => setActiveTab('courses')}
             className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
@@ -116,6 +130,30 @@ export default function DashboardPage() {
             }`}
           >
             Logros
+          </button>
+          <button
+            onClick={() => setActiveTab('paths')}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+              activeTab === 'paths' ? 'bg-brand-600 text-white' : 'text-dark-400 hover:text-white bg-dark-800/50'
+            }`}
+          >
+            Rutas
+          </button>
+          <button
+            onClick={() => setActiveTab('certificates')}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+              activeTab === 'certificates' ? 'bg-brand-600 text-white' : 'text-dark-400 hover:text-white bg-dark-800/50'
+            }`}
+          >
+            Certificados
+          </button>
+          <button
+            onClick={() => setActiveTab('recommended')}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+              activeTab === 'recommended' ? 'bg-brand-600 text-white' : 'text-dark-400 hover:text-white bg-dark-800/50'
+            }`}
+          >
+            Recomendados
           </button>
           <Link href="/grupos" className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors text-dark-400 hover:text-white bg-dark-800/50`}>
             Grupos
@@ -180,6 +218,54 @@ export default function DashboardPage() {
             {(session?.user as any)?.id && (
               <AchievementList userId={(session?.user as any)?.id} />
             )}
+          </div>
+        )}
+
+        {activeTab === 'paths' && (
+          <div>
+            <LearningPaths />
+          </div>
+        )}
+
+        {activeTab === 'certificates' && (
+          <div>
+            {certificates.length > 0 ? (
+              <div className="space-y-4">
+                {certificates.map((cert) => (
+                  <div key={cert.id} className="card p-5 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <FiAward size={20} className="text-yellow-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-white font-semibold">{cert.course?.title || 'Curso'}</h3>
+                        <p className="text-xs text-dark-500">#{cert.certificateNumber} &middot; {new Date(cert.issuedAt).toLocaleDateString('es')}</p>
+                      </div>
+                    </div>
+                    <Certificate
+                      certificateId={cert.id}
+                      userName={session?.user?.name || ''}
+                      courseName={cert.course?.title || ''}
+                      issuedAt={cert.issuedAt}
+                      certificateNumber={cert.certificateNumber}
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16">
+                <FiAward size={32} className="text-dark-600 mx-auto mb-3" />
+                <p className="text-dark-400">Aún no tienes certificados. Completa un curso para obtener el tuyo.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'recommended' && (
+          <div>
+            <RecommendedCourses
+              enrolledCourseIds={enrollments.map((e) => e.course.id)}
+            />
           </div>
         )}
       </div>

@@ -17,6 +17,7 @@ export async function GET(
         image: true,
         bio: true,
         role: true,
+        interests: true,
         createdAt: true,
         enrollments: {
           include: {
@@ -27,6 +28,8 @@ export async function GET(
           select: {
             lessonProgress: { where: { completed: true } },
             achievements: true,
+            certificates: true,
+            challengeSubmissions: { where: { status: 'APPROVED' } },
           },
         },
       },

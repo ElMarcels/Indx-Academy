@@ -23,6 +23,7 @@ export async function GET(
         questions: quiz.questions.map((q) => ({
           ...q,
           options: JSON.parse(q.options),
+          difficulty: q.difficulty,
         })),
       },
     });

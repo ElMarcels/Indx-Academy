@@ -5,8 +5,9 @@ import { useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { FiUser, FiBook, FiAward, FiArrowLeft, FiEdit2, FiSave } from 'react-icons/fi';
+import { FiUser, FiBook, FiAward, FiArrowLeft, FiEdit2, FiSave, FiTag } from 'react-icons/fi';
 import { AchievementBadge } from '@/components/AchievementList';
+import { ProfilePhoto } from '@/components/ProfilePhoto';
 import toast from 'react-hot-toast';
 
 interface UserProfile {
@@ -15,6 +16,7 @@ interface UserProfile {
   email: string;
   image: string | null;
   bio: string | null;
+  interests: string | null;
   createdAt: string;
   enrollments: {
     course: { id: string; title: string; slug: string; thumbnail: string | null };
@@ -39,12 +41,28 @@ interface Achievement {
   earnedAt: string;
 }
 
+interface Certificate {
+  id: string;
+  certificateNumber: string;
+  issuedAt: string;
+  course: { title: string; slug: string };
+}
+
+interface ChallengeSubmission {
+  id: string;
+  status: string;
+  submittedAt: string;
+  challenge: { title: string; slug: string };
+}
+
 export default function StudentProfilePage() {
   const params = useParams();
   const userId = String(params.userId);
   const { data: session } = useSession();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
+  const [challenges, setChallenges] = useState<ChallengeSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [bio, setBio] = useState('');
@@ -52,12 +70,24 @@ export default function StudentProfilePage() {
 
   const isMe = (session?.user as any)?.id === userId;
 
+  const parsedInterests: string[] = (() => {
+    if (!user?.interests) return [];
+    try {
+      const parsed = JSON.parse(user.interests);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  })();
+
   useEffect(() => {
     async function load() {
       try {
-        const [userRes, achRes] = await Promise.all([
+        const [userRes, achRes, certRes, chalRes] = await Promise.all([
           fetch(`/api/students/${userId}`),
           fetch(`/api/users/${userId}/achievements`),
+          fetch(`/api/certificates?userId=${userId}`),
+          fetch(`/api/challenges?userId=${userId}`),
         ]);
         if (userRes.ok) {
           const data = await userRes.json();
@@ -68,6 +98,14 @@ export default function StudentProfilePage() {
         if (achRes.ok) {
           const data = await achRes.json();
           setAchievements(data.achievements);
+        }
+        if (certRes.ok) {
+          const data = await certRes.json();
+          setCertificates(data.certificates || []);
+        }
+        if (chalRes.ok) {
+          const data = await chalRes.json();
+          setChallenges(data.submissions || []);
         }
       } catch { /* silent */ } finally {
         setLoading(false);
@@ -123,9 +161,7 @@ export default function StudentProfilePage() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <div className="card p-8 mb-8">
             <div className="flex items-start gap-6">
-              <div className="w-20 h-20 bg-gradient-to-br from-brand-500/20 to-accent-500/20 rounded-2xl flex items-center justify-center border border-brand-500/20 flex-shrink-0">
-                <FiUser size={32} className="text-brand-400" />
-              </div>
+              <ProfilePhoto userId={userId} currentImage={user.image} isMe={isMe} size="lg" />
               <div className="flex-1">
                 {editing ? (
                   <div className="space-y-3">
@@ -148,12 +184,22 @@ export default function StudentProfilePage() {
                     </div>
                     <p className="text-dark-400 text-sm mt-1">{user.email}</p>
                     {user.bio && <p className="text-dark-300 mt-3">{user.bio}</p>}
+                    {parsedInterests.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {parsedInterests.map((interest) => (
+                          <span key={interest} className="inline-flex items-center gap-1 text-xs bg-dark-800 text-dark-300 px-2.5 py-1 rounded-full border border-dark-700">
+                            <FiTag size={10} /> {interest}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </>
                 )}
 
                 <div className="flex items-center gap-6 mt-4 text-sm text-dark-500">
                   <span className="flex items-center gap-1"><FiBook size={14} /> {user._count.lessonProgress} lecciones completadas</span>
                   <span className="flex items-center gap-1"><FiAward size={14} /> {achievements.length} logros</span>
+                  <span className="flex items-center gap-1"><FiAward size={14} /> {certificates.length} certificados</span>
                 </div>
               </div>
             </div>
@@ -173,7 +219,7 @@ export default function StudentProfilePage() {
 
           {/* Enrolled Courses */}
           {user.enrollments.length > 0 && (
-            <div>
+            <div className="mb-8">
               <h2 className="text-xl font-bold text-white mb-4">Cursos Inscritos</h2>
               <div className="grid sm:grid-cols-2 gap-4">
                 {user.enrollments.map((e) => (
@@ -183,6 +229,52 @@ export default function StudentProfilePage() {
                     </div>
                     <span className="text-sm font-medium text-white">{e.course.title}</span>
                   </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Certificates */}
+          {certificates.length > 0 && (
+            <div className="mb-8">
+              <h2 className="text-xl font-bold text-white mb-4">Certificados</h2>
+              <div className="space-y-2">
+                {certificates.map((cert) => (
+                  <div key={cert.id} className="card-hover p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <FiAward size={16} className="text-yellow-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-white">{cert.course.title}</p>
+                        <p className="text-xs text-dark-500">#{cert.certificateNumber}</p>
+                      </div>
+                    </div>
+                    <span className="text-xs text-dark-500">{new Date(cert.issuedAt).toLocaleDateString('es')}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Challenges */}
+          {challenges.length > 0 && (
+            <div>
+              <h2 className="text-xl font-bold text-white mb-4">Desafíos Aprobados</h2>
+              <div className="space-y-2">
+                {challenges.filter((c) => c.status === 'APPROVED').map((chal) => (
+                  <div key={chal.id} className="card-hover p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-accent-500/20 to-accent-600/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <FiAward size={16} className="text-accent-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-white">{chal.challenge.title}</p>
+                        <p className="text-xs text-dark-500">Aprobado</p>
+                      </div>
+                    </div>
+                    <span className="text-xs text-dark-500">{new Date(chal.submittedAt).toLocaleDateString('es')}</span>
+                  </div>
                 ))}
               </div>
             </div>

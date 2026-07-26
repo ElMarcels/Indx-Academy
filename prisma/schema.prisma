@@ -54,6 +54,8 @@ model User {
   image         String?
   bio           String?
   role          String    @default("STUDENT") // STUDENT | ADMIN
+  interests     String?   // JSON array of interest tags
+  pushSubscription String? // JSON push subscription for web notifications
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -72,6 +74,13 @@ model User {
   createdGroups    Group[]
   contacts         Contact[]          @relation("ContactOwner")
   contactOf        Contact[]          @relation("ContactTarget")
+  certificates     Certificate[]
+  notifications    UserNotification[]
+  peerMatches      PeerMatch[]        @relation("PeerUser")
+  peerOf           PeerMatch[]        @relation("PeerTarget")
+  callSessions     CallSession[]
+  forumPosts       ForumPost[]
+  forumReplies     ForumReply[]
 }
 
 // ─── Courses ────────────────────────────────────────────
@@ -95,6 +104,10 @@ model Course {
   enrollments Enrollment[]
   comments    Comment[]
   challenges  Challenge[]
+  templates   CourseTemplate[]
+  forumPosts  ForumPost[]
+  paths       LearningPathCourse[]
+  certificates Certificate[]
 }
 
 model Module {
@@ -126,6 +139,8 @@ model Lesson {
   progress LessonProgress[]
   comments Comment[]
   files    LessonFile[]
+  exercises CodeExercise[]
+  terminalCommands TerminalCommand[]
 
   @@unique([moduleId, order])
 }
@@ -175,6 +190,7 @@ model Quiz {
   id          String   @id @default(cuid())
   title       String
   description String?
+  isAdaptive  Boolean  @default(false) // Adaptive quiz flag
   moduleId    String
   createdAt   DateTime @default(now())
 
@@ -189,6 +205,7 @@ model QuizQuestion {
   options       String   // JSON array of options
   correctIndex  Int      // Index of correct answer
   explanation   String?
+  difficulty    String   @default("MEDIUM") // EASY | MEDIUM | HARD
   order         Int
   quizId        String
   createdAt     DateTime @default(now())
@@ -270,7 +287,7 @@ model UserAchievement {
   @@unique([userId, achievementId])
 }
 
-// ─── Comments ───────────────────────────────────────────
+// ─── Comments (threaded) ───────────────────────────────
 
 model Comment {
   id        String   @id @default(cuid())
@@ -278,12 +295,45 @@ model Comment {
   userId    String
   courseId   String?
   lessonId  String?
+  parentId  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  lesson Lesson? @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course   Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lesson   Lesson?  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  parent   Comment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  Comment[] @relation("CommentReplies")
+}
+
+// ─── Forum (per course) ────────────────────────────────
+
+model ForumPost {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  courseId     String
+  userId      String
+  isPinned    Boolean  @default(false)
+  isResolved  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  course   Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  replies  ForumReply[]
+}
+
+model ForumReply {
+  id        String   @id @default(cuid())
+  content   String
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  post ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // ─── Chat / Messages ────────────────────────────────────
@@ -328,6 +378,7 @@ model Group {
   createdBy User?           @relation(fields: [createdById], references: [id])
   members   GroupMembership[]
   messages  Message[]
+  calls     CallSession[]
 }
 
 model GroupMembership {
@@ -341,4 +392,156 @@ model GroupMembership {
   group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
   @@unique([userId, groupId])
+}
+
+// ─── Course Templates (project starter files) ──────────
+
+model CourseTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  fileName    String
+  fileUrl     String
+  fileSize    Int?
+  language    String?  // e.g. "javascript", "python", "html"
+  courseId     String
+  createdAt   DateTime @default(now())
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+// ─── Code Exercises (interactive) ──────────────────────
+
+model CodeExercise {
+  id           String   @id @default(cuid())
+  title        String
+  description  String
+  language     String   @default("javascript") // javascript | python | html | css
+  starterCode  String?  // Initial code template
+  solution     String?  // Expected solution
+  testCases    String   // JSON: [{ input: ..., expected: ..., description: ... }]
+  difficulty   String   @default("EASY") // EASY | MEDIUM | HARD
+  points       Int      @default(10)
+  lessonId     String
+  createdAt    DateTime @default(now())
+
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+}
+
+// ─── Terminal Commands (virtual terminal) ──────────────
+
+model TerminalCommand {
+  id          String   @id @default(cuid())
+  command     String
+  description String?
+  output      String   // Expected output
+  explanation String?
+  order       Int
+  lessonId    String
+  createdAt   DateTime @default(now())
+
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([lessonId, order])
+}
+
+// ─── Technical Glossary ────────────────────────────────
+
+model GlossaryTerm {
+  id          String   @id @default(cuid())
+  term        String   @unique
+  definition  String
+  example     String?
+  category    String?  // e.g. "javascript", "react", "css", "general"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ─── Learning Paths (course playlists) ─────────────────
+
+model LearningPath {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  thumbnail   String?
+  level       String   @default("BEGINNER") // BEGINNER | INTERMEDIATE | ADVANCED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  courses LearningPathCourse[]
+}
+
+model LearningPathCourse {
+  id         String   @id @default(cuid())
+  pathId     String
+  courseId    String
+  order      Int
+  createdAt  DateTime @default(now())
+
+  path   LearningPath @relation(fields: [pathId], references: [id], onDelete: Cascade)
+  course Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([pathId, courseId])
+  @@unique([pathId, order])
+}
+
+// ─── Certificates ──────────────────────────────────────
+
+model Certificate {
+  id          String   @id @default(cuid())
+  userId      String
+  courseId     String
+  completedAt DateTime @default(now())
+  certificateNumber String @unique // e.g. "INDX-2024-XXXX"
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+}
+
+// ─── Notifications ─────────────────────────────────────
+
+model UserNotification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      String   @default("INFO") // INFO | ACHIEVEMENT | MESSAGE | FORUM | SYSTEM
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── Peer Matching ─────────────────────────────────────
+
+model PeerMatch {
+  id        String   @id @default(cuid())
+  userId    String
+  peerId    String
+  status    String   @default("PENDING") // PENDING | ACCEPTED | REJECTED
+  message   String?
+  createdAt DateTime @default(now())
+
+  user    User @relation("PeerUser", fields: [userId], references: [id], onDelete: Cascade)
+  peer    User @relation("PeerTarget", fields: [peerId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, peerId])
+}
+
+// ─── Call Sessions (WebRTC) ────────────────────────────
+
+model CallSession {
+  id        String   @id @default(cuid())
+  groupId   String?
+  callerId  String
+  type      String   @default("AUDIO") // AUDIO | VIDEO
+  status    String   @default("ACTIVE") // ACTIVE | ENDED
+  startedAt DateTime @default(now())
+  endedAt   DateTime?
+
+  caller  User    @relation(fields: [callerId], references: [id], onDelete: Cascade)
+  group   Group?  @relation(fields: [groupId], references: [id], onDelete: Cascade)
 }

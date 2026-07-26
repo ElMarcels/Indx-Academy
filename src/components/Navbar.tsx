@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiMenu, FiX, FiUser, FiLogOut, FiShield, FiStar, FiUsers, FiMessageSquare, FiUserPlus,
 } from 'react-icons/fi';
+import { Notifications } from '@/components/Notifications';
 
 export function Navbar() {
   const { data: session, status } = useSession();
@@ -68,6 +69,14 @@ export function Navbar() {
                   Chat
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-brand-500 to-accent-500 group-hover:w-full transition-all duration-300" />
                 </Link>
+                <Link href="/glosario" className="text-dark-300 hover:text-white transition-colors text-sm font-medium relative group">
+                  Glosario
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-brand-500 to-accent-500 group-hover:w-full transition-all duration-300" />
+                </Link>
+                <Link href="/rutas" className="text-dark-300 hover:text-white transition-colors text-sm font-medium relative group">
+                  Rutas
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-brand-500 to-accent-500 group-hover:w-full transition-all duration-300" />
+                </Link>
               </>
             )}
 
@@ -82,6 +91,7 @@ export function Navbar() {
               <div className="w-20 h-8 bg-dark-800 rounded-xl animate-pulse" />
             ) : session ? (
               <div className="flex items-center gap-3 pl-3 border-l border-dark-700/50">
+                <Notifications />
                 <Link href={`/estudiantes/${(session.user as any)?.id || ''}`} className="flex items-center gap-2 group">
                   <motion.div className="w-8 h-8 bg-gradient-to-br from-brand-500/20 to-accent-500/20 rounded-full flex items-center justify-center border border-brand-500/20" whileHover={{ scale: 1.1 }}>
                     <FiUser size={14} className="text-brand-400" />
@@ -131,6 +141,15 @@ export function Navbar() {
                     <Link href="/chat" className="flex items-center gap-2 text-dark-300 hover:text-white py-2 text-sm" onClick={() => setMobileOpen(false)}>
                       <FiMessageSquare size={14} /> Chat
                     </Link>
+                    <Link href="/glosario" className="block text-dark-300 hover:text-white py-2 text-sm" onClick={() => setMobileOpen(false)}>
+                      Glosario
+                    </Link>
+                    <Link href="/rutas" className="block text-dark-300 hover:text-white py-2 text-sm" onClick={() => setMobileOpen(false)}>
+                      Rutas
+                    </Link>
+                    <div className="py-2">
+                      <Notifications />
+                    </div>
                     {(session.user as any)?.role === 'ADMIN' && (
                       <Link href="/admin" className="block text-accent-400 hover:text-accent-300 py-2 text-sm" onClick={() => setMobileOpen(false)}>
                         Panel Admin
