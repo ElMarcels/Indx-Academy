@@ -3,6 +3,34 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
+export async function PUT(
+  req: Request,
+  { params }: { params: { lessonId: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || (session.user as any).role !== 'ADMIN') {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    const { title, content, task, isFree } = await req.json();
+
+    const lesson = await prisma.lesson.update({
+      where: { id: params.lessonId },
+      data: {
+        ...(title !== undefined && { title }),
+        ...(content !== undefined && { content }),
+        ...(task !== undefined && { task }),
+        ...(isFree !== undefined && { isFree }),
+      },
+    });
+
+    return NextResponse.json(lesson);
+  } catch {
+    return NextResponse.json({ error: 'Error al actualizar lección' }, { status: 500 });
+  }
+}
+
 export async function DELETE(
   req: Request,
   { params }: { params: { lessonId: string } }

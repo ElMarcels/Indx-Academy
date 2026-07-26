@@ -70,3 +70,23 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: 'Error del servidor' }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if ((session?.user as any)?.role !== 'ADMIN') {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  }
+
+  try {
+    const { quizId } = await req.json();
+    if (!quizId) {
+      return NextResponse.json({ error: 'quizId requerido' }, { status: 400 });
+    }
+
+    await prisma.quizQuestion.deleteMany({ where: { quizId } });
+    await prisma.quiz.delete({ where: { id: quizId } });
+    return NextResponse.json({ ok: true });
+  } catch {
+    return NextResponse.json({ error: 'Error del servidor' }, { status: 500 });
+  }
+}
