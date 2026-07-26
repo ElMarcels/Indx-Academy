@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
-  FiUsers, FiBook, FiBarChart2, FiArrowRight, FiClock, FiSparkles,
+  FiUsers, FiBook, FiBarChart2, FiArrowRight, FiClock, FiStar,
 } from 'react-icons/fi';
 
 interface Stats {

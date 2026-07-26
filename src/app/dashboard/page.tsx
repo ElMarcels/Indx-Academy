@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { FiBook, FiClock, FiArrowRight, FiSparkles } from 'react-icons/fi';
+import { FiBook, FiClock, FiArrowRight, FiStar } from 'react-icons/fi';
 import { ProgressBar } from '@/components/ProgressBar';
 
 interface EnrolledCourse {
@@ -143,7 +143,7 @@ export default function DashboardPage() {
             <h2 className="text-xl font-semibold text-white mb-2">Aún no estás inscrito en ningún curso</h2>
             <p className="text-dark-400 mb-6">Explora nuestro catálogo y comienza a aprender hoy. Todo es gratis.</p>
             <Link href="/cursos" className="btn-primary inline-flex items-center gap-2">
-              <FiSparkles size={16} /> Ver Cursos <FiArrowRight size={16} />
+              <FiStar size={16} /> Ver Cursos <FiArrowRight size={16} />
             </Link>
           </motion.div>
         )}

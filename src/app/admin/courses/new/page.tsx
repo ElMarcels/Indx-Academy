@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import { FiArrowLeft, FiSparkles } from 'react-icons/fi';
+import { FiArrowLeft, FiStar } from 'react-icons/fi';
 
 export default function NewCoursePage() {
   const { data: session, status } = useSession();
@@ -65,7 +65,7 @@ export default function NewCoursePage() {
 
         <h1 className="text-3xl font-bold text-white mb-2">Nuevo Curso</h1>
         <p className="text-dark-400 mb-8 flex items-center gap-2">
-          <FiSparkles size={14} className="text-emerald-400" />
+          <FiStar size={14} className="text-emerald-400" />
           Todos los cursos son 100% gratuitos
         </p>
 

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiMenu, FiX, FiUser, FiBook, FiLogOut, FiShield, FiSparkles } from 'react-icons/fi';
+import { FiMenu, FiX, FiUser, FiBook, FiLogOut, FiShield, FiStar } from 'react-icons/fi';
 
 export function Navbar() {
   const { data: session, status } = useSession();
@@ -31,7 +31,7 @@ export function Navbar() {
               whileHover={{ scale: 1.1, rotate: 5 }}
               whileTap={{ scale: 0.95 }}
             >
-              <FiSparkles size={16} className="text-white" />
+              <FiStar size={16} className="text-white" />
             </motion.div>
             <span className="text-xl font-bold text-white">
               Indx<span className="gradient-text">Academy</span>

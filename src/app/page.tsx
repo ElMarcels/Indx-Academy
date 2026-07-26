@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { FiCode, FiFileText, FiAward, FiUsers, FiCheck, FiArrowRight, FiSparkles, FiBookOpen, FiZap } from 'react-icons/fi';
+import { FiCode, FiFileText, FiAward, FiUsers, FiCheck, FiArrowRight, FiStar, FiBookOpen, FiZap } from 'react-icons/fi';
 import { CourseCard } from '@/components/CourseCard';
 import { useEffect, useState } from 'react';
 
@@ -59,7 +59,7 @@ export default function HomePage() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5 }}
             >
-              <FiSparkles size={14} className="text-brand-400" />
+              <FiStar size={14} className="text-brand-400" />
               <span className="text-brand-300 text-sm font-medium">100% Gratis - Aprende sin límites</span>
             </motion.div>
 

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import { FiPlus, FiEdit2, FiTrash2, FiEye, FiEyeOff, FiBarChart2, FiSparkles } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiEye, FiEyeOff, FiBarChart2, FiStar } from 'react-icons/fi';
 
 interface Course {
   id: string;

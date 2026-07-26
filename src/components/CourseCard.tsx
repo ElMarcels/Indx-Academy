@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { FiClock, FiBarChart2, FiUsers, FiFileText, FiSparkles } from 'react-icons/fi';
+import { FiClock, FiBarChart2, FiUsers, FiFileText, FiStar } from 'react-icons/fi';
 
 interface CourseCardProps {
   course: {
@@ -73,7 +73,7 @@ export function CourseCard({ course, enrolled, index = 0 }: CourseCardProps) {
             {enrolled && (
               <div className="absolute top-3 right-3">
                 <span className="badge-green text-[11px] backdrop-blur-sm flex items-center gap-1">
-                  <FiSparkles size={10} /> Inscrito
+                  <FiStar size={10} /> Inscrito
                 </span>
               </div>
             )}
@@ -123,7 +123,7 @@ export function CourseCard({ course, enrolled, index = 0 }: CourseCardProps) {
                 por <span className="text-dark-200">{course.author.name || 'Indx'}</span>
               </span>
               <span className="text-emerald-400 font-bold text-sm flex items-center gap-1">
-                <FiSparkles size={12} /> Gratis
+                <FiStar size={12} /> Gratis
               </span>
             </div>
           </div>

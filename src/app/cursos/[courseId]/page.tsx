@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
   FiCheck, FiClock, FiLock, FiBookOpen, FiUsers,
-  FiBarChart2, FiArrowLeft, FiArrowRight, FiFileText, FiSparkles,
+  FiBarChart2, FiArrowLeft, FiArrowRight, FiFileText, FiStar,
 } from 'react-icons/fi';
 import { ProgressBar } from '@/components/ProgressBar';
 
@@ -297,7 +297,7 @@ export default function CursoPage() {
               <div className="card p-6">
                 <div className="text-center mb-6">
                   <div className="inline-flex items-center gap-2 text-emerald-400 font-bold text-2xl">
-                    <FiSparkles size={20} />
+                    <FiStar size={20} />
                     100% Gratis
                   </div>
                 </div>

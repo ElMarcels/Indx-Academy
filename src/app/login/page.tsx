@@ -6,7 +6,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { FiMail, FiLock, FiEye, FiEyeOff, FiSparkles } from 'react-icons/fi';
+import { FiMail, FiLock, FiEye, FiEyeOff, FiStar } from 'react-icons/fi';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -116,7 +116,7 @@ export default function LoginPage() {
 
           <div className="mt-6 pt-4 border-t border-dark-800/50">
             <p className="text-dark-500 text-xs text-center flex items-center justify-center gap-1">
-              <FiSparkles size={12} className="text-emerald-400" />
+              <FiStar size={12} className="text-emerald-400" />
               Demo: admin@indx.academy / admin123
             </p>
           </div>
