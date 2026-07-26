@@ -3,6 +3,20 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
+export async function GET(req: Request, { params }: { params: { postId: string } }) {
+  try {
+    const replies = await prisma.forumReply.findMany({
+      where: { postId: params.postId },
+      include: { user: { select: { name: true, image: true } } },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    return NextResponse.json({ replies });
+  } catch {
+    return NextResponse.json({ error: 'Error al cargar respuestas' }, { status: 500 });
+  }
+}
+
 export async function PUT(req: Request, { params }: { params: { postId: string } }) {
   try {
     const session = await getServerSession(authOptions);

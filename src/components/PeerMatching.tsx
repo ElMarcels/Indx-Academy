@@ -48,7 +48,16 @@ export function PeerMatching() {
       const res = await fetch('/api/peers');
       if (res.ok) {
         const data = await res.json();
-        setPeers(data.peers || []);
+        const mapped = (data.suggestions || []).map((s: any) => ({
+          id: s.user.id,
+          name: s.user.name || 'Anónimo',
+          email: '',
+          bio: s.user.bio || null,
+          interests: [],
+          sharedCourses: s.sharedCoursesCount || 0,
+          image: s.user.image || null,
+        }));
+        setPeers(mapped);
       }
     } catch { /* silent */ } finally {
       setLoading(false);
@@ -78,7 +87,7 @@ export function PeerMatching() {
       const res = await fetch('/api/peers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ receiverId: peerId }),
+        body: JSON.stringify({ peerId }),
       });
       if (res.ok) {
         toast.success('Solicitud enviada');
@@ -96,10 +105,10 @@ export function PeerMatching() {
 
   async function updateRequest(requestId: string, status: 'ACCEPTED' | 'REJECTED') {
     try {
-      const res = await fetch('/api/peers', {
+      const res = await fetch(`/api/peers/${requestId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ requestId, status }),
+        body: JSON.stringify({ status }),
       });
       if (res.ok) {
         toast.success(status === 'ACCEPTED' ? 'Solicitud aceptada' : 'Solicitud rechazada');

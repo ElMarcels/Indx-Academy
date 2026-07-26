@@ -65,7 +65,7 @@ export function LearningPaths() {
       const res = await fetch('/api/paths');
       if (res.ok) {
         const data = await res.json();
-        setPaths(data);
+        setPaths(data.paths || []);
       }
     } catch {
       toast.error('Error al cargar rutas de aprendizaje');
@@ -87,8 +87,8 @@ export function LearningPaths() {
         body: JSON.stringify(newPath),
       });
       if (res.ok) {
-        const path = await res.json();
-        setPaths((prev) => [...prev, { ...path, courses: [] }]);
+        const data = await res.json();
+        setPaths((prev) => [...prev, { ...data.path, courses: [] }]);
         setShowCreate(false);
         setNewPath({ title: '', description: '', level: 'BEGINNER' });
         toast.success('Ruta creada');

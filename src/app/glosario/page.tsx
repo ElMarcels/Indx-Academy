@@ -23,7 +23,7 @@ export default function GlosarioPage() {
         const res = await fetch('/api/glossary');
         if (res.ok) {
           const data = await res.json();
-          setTerms(data);
+          setTerms(data.terms || []);
         }
       } catch {
         // silent

@@ -47,12 +47,12 @@ export function RecommendedCourses({ enrolledCourseIds }: RecommendedCoursesProp
     try {
       const params = new URLSearchParams();
       if (enrolledCourseIds.length > 0) {
-        params.set('enrolled', enrolledCourseIds.join(','));
+        params.set('enrolledIds', enrolledCourseIds.join(','));
       }
       const res = await fetch(`/api/courses/recommended?${params}`);
       if (res.ok) {
         const data = await res.json();
-        setCourses(data);
+        setCourses(data.courses || []);
       }
     } catch {
       // silently fail

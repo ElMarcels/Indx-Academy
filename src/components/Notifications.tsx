@@ -64,10 +64,8 @@ export function Notifications() {
 
   async function markAsRead(id: string) {
     try {
-      await fetch('/api/notifications', {
+      await fetch(`/api/notifications/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id }),
       });
       setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
     } catch { /* silent */ }
@@ -76,10 +74,8 @@ export function Notifications() {
   async function markAllAsRead() {
     setMarkingAll(true);
     try {
-      await fetch('/api/notifications', {
+      await fetch('/api/notifications/read-all', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ markAll: true }),
       });
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
       toast.success('Todas marcadas como leídas');

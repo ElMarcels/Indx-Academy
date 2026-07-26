@@ -15,10 +15,10 @@ interface ForumPost {
   id: string;
   title: string;
   content: string;
-  authorId: string;
+  userId: string;
   authorName: string;
-  pinned: boolean;
-  resolved: boolean;
+  isPinned: boolean;
+  isResolved: boolean;
   createdAt: string;
   _count: { replies: number };
 }
@@ -26,7 +26,7 @@ interface ForumPost {
 interface ForumReply {
   id: string;
   content: string;
-  authorId: string;
+  userId: string;
   authorName: string;
   createdAt: string;
 }
@@ -58,7 +58,14 @@ export function Forum({ courseId }: ForumProps) {
       const res = await fetch(`/api/forum?courseId=${courseId}`);
       if (res.ok) {
         const data = await res.json();
-        setPosts(data.posts || []);
+        const mapped = (data.posts || []).map((p: any) => ({
+          ...p,
+          userId: p.userId,
+          authorName: p.user?.name || 'Anónimo',
+          isPinned: p.isPinned,
+          isResolved: p.isResolved,
+        }));
+        setPosts(mapped);
       }
     } catch { /* silent */ } finally {
       setLoading(false);
@@ -96,10 +103,15 @@ export function Forum({ courseId }: ForumProps) {
     setSelectedPost(post);
     setRepliesLoading(true);
     try {
-      const res = await fetch(`/api/forum?postId=${post.id}`);
+      const res = await fetch(`/api/forum/${post.id}`);
       if (res.ok) {
         const data = await res.json();
-        setReplies(data.replies || []);
+        const mapped = (data.replies || []).map((r: any) => ({
+          ...r,
+          userId: r.userId,
+          authorName: r.user?.name || 'Anónimo',
+        }));
+        setReplies(mapped);
       }
     } catch { /* silent */ } finally {
       setRepliesLoading(false);
@@ -131,14 +143,14 @@ export function Forum({ courseId }: ForumProps) {
 
   async function togglePin(post: ForumPost) {
     try {
-      const res = await fetch('/api/forum', {
+      const res = await fetch(`/api/forum/${post.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ postId: post.id, pinned: !post.pinned }),
+        body: JSON.stringify({ isPinned: !post.isPinned }),
       });
       if (res.ok) {
-        toast.success(post.pinned ? 'Desfijado' : 'Fijado');
-        if (selectedPost?.id === post.id) setSelectedPost({ ...post, pinned: !post.pinned });
+        toast.success(post.isPinned ? 'Desfijado' : 'Fijado');
+        if (selectedPost?.id === post.id) setSelectedPost({ ...post, isPinned: !post.isPinned });
         await fetchPosts();
       }
     } catch { toast.error('Error'); }
@@ -146,14 +158,14 @@ export function Forum({ courseId }: ForumProps) {
 
   async function toggleResolved(post: ForumPost) {
     try {
-      const res = await fetch('/api/forum', {
+      const res = await fetch(`/api/forum/${post.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ postId: post.id, resolved: !post.resolved }),
+        body: JSON.stringify({ isResolved: !post.isResolved }),
       });
       if (res.ok) {
-        toast.success(post.resolved ? 'Marcado como abierto' : 'Marcado como resuelto');
-        if (selectedPost?.id === post.id) setSelectedPost({ ...post, resolved: !post.resolved });
+        toast.success(post.isResolved ? 'Marcado como abierto' : 'Marcado como resuelto');
+        if (selectedPost?.id === post.id) setSelectedPost({ ...post, isResolved: !post.isResolved });
         await fetchPosts();
       }
     } catch { toast.error('Error'); }
@@ -165,8 +177,8 @@ export function Forum({ courseId }: ForumProps) {
       p.content.toLowerCase().includes(search.toLowerCase())
   );
 
-  const pinned = filtered.filter((p) => p.pinned);
-  const unpinned = filtered.filter((p) => !p.pinned);
+  const pinned = filtered.filter((p) => p.isPinned);
+  const unpinned = filtered.filter((p) => !p.isPinned);
 
   if (selectedPost) {
     return (
@@ -183,8 +195,8 @@ export function Forum({ courseId }: ForumProps) {
           <div className="flex items-start justify-between gap-3 mb-3">
             <h2 className="text-xl font-bold text-white">{selectedPost.title}</h2>
             <div className="flex items-center gap-2 shrink-0">
-              {selectedPost.pinned && <span className="badge-yellow text-[10px] flex items-center gap-1"><FiMapPin size={10} /> Fijado</span>}
-              {selectedPost.resolved && <span className="badge-green text-[10px] flex items-center gap-1"><FiCheckCircle size={10} /> Resuelto</span>}
+              {selectedPost.isPinned && <span className="badge-yellow text-[10px] flex items-center gap-1"><FiMapPin size={10} /> Fijado</span>}
+              {selectedPost.isResolved && <span className="badge-green text-[10px] flex items-center gap-1"><FiCheckCircle size={10} /> Resuelto</span>}
             </div>
           </div>
           <div className="flex items-center gap-3 text-xs text-dark-500 mb-4">
@@ -199,10 +211,10 @@ export function Forum({ courseId }: ForumProps) {
           {isAdmin && (
             <div className="flex items-center gap-2 mt-4 pt-4 border-t border-dark-800/50">
               <motion.button onClick={() => togglePin(selectedPost)} className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1" whileTap={{ scale: 0.95 }}>
-                <FiMapPin size={12} /> {selectedPost.pinned ? 'Desfijar' : 'Fijar'}
+                <FiMapPin size={12} /> {selectedPost.isPinned ? 'Desfijar' : 'Fijar'}
               </motion.button>
               <motion.button onClick={() => toggleResolved(selectedPost)} className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1" whileTap={{ scale: 0.95 }}>
-                <FiCheckCircle size={12} /> {selectedPost.resolved ? 'Abrir' : 'Resolver'}
+                <FiCheckCircle size={12} /> {selectedPost.isResolved ? 'Abrir' : 'Resolver'}
               </motion.button>
             </div>
           )}
@@ -392,8 +404,8 @@ function PostCard({ post, onClick }: { post: ForumPost; onClick: () => void }) {
           {post.title}
         </h4>
         <div className="flex items-center gap-1.5 shrink-0">
-          {post.pinned && <span className="badge-yellow text-[9px] py-0 px-1.5"><FiMapPin size={8} /> Fijado</span>}
-          {post.resolved && <span className="badge-green text-[9px] py-0 px-1.5"><FiCheckCircle size={8} /> Resuelto</span>}
+          {post.isPinned && <span className="badge-yellow text-[9px] py-0 px-1.5"><FiMapPin size={8} /> Fijado</span>}
+          {post.isResolved && <span className="badge-green text-[9px] py-0 px-1.5"><FiCheckCircle size={8} /> Resuelto</span>}
         </div>
       </div>
       <div className="flex items-center gap-3 text-[11px] text-dark-500">

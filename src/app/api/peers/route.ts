@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
@@ -11,6 +11,39 @@ export async function GET() {
 
   const user = await prisma.user.findUnique({ where: { email: session.user.email } });
   if (!user) return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
+
+  const requestsParam = req.nextUrl.searchParams.get('requests');
+  if (requestsParam === 'true') {
+    try {
+      const requests = await prisma.peerMatch.findMany({
+        where: {
+          OR: [
+            { userId: user.id },
+            { peerId: user.id },
+          ],
+        },
+        include: {
+          user: { select: { id: true, name: true, image: true } },
+          peer: { select: { id: true, name: true, image: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      const mapped = requests.map((r) => ({
+        id: r.id,
+        senderId: r.userId,
+        senderName: r.user.name || 'Anónimo',
+        receiverId: r.peerId,
+        receiverName: r.peer.name || 'Anónimo',
+        status: r.status,
+        createdAt: r.createdAt.toISOString(),
+      }));
+
+      return NextResponse.json({ requests: mapped });
+    } catch {
+      return NextResponse.json({ error: 'Error del servidor' }, { status: 500 });
+    }
+  }
 
   try {
     const enrolledCourseIds = (await prisma.enrollment.findMany({

@@ -9,8 +9,8 @@ import { FiAward, FiDownload } from 'react-icons/fi';
 interface CertificateData {
   id: string;
   courseId: string;
-  courseTitle: string;
-  completionDate: string;
+  course: { title: string; slug: string } | null;
+  completedAt: string;
   certificateNumber: string;
 }
 
@@ -28,7 +28,7 @@ export default function CertificadosPage() {
         const res = await fetch('/api/certificates');
         if (res.ok) {
           const data = await res.json();
-          setCertificates(data);
+          setCertificates(data.certificates || []);
         }
       } catch {
         // silent
@@ -109,9 +109,9 @@ export default function CertificadosPage() {
                             <FiAward size={20} className="text-emerald-400" />
                           </div>
                           <div className="min-w-0">
-                            <h3 className="text-white font-semibold truncate">{cert.courseTitle}</h3>
+                            <h3 className="text-white font-semibold truncate">{cert.course?.title || 'Curso'}</h3>
                             <div className="flex flex-wrap items-center gap-3 text-xs text-dark-500 mt-0.5">
-                              <span>{cert.completionDate}</span>
+                              <span>{cert.completedAt ? new Date(cert.completedAt).toLocaleDateString('es') : ''}</span>
                               <span className="w-px h-3 bg-dark-700" />
                               <span>No. {cert.certificateNumber}</span>
                             </div>
@@ -140,9 +140,9 @@ export default function CertificadosPage() {
                             <div className="mt-5 pt-5 border-t border-dark-800/50">
                               <Certificate
                                 courseId={cert.courseId}
-                                courseTitle={cert.courseTitle}
+                                courseTitle={cert.course?.title || ''}
                                 userName={userName}
-                                completionDate={cert.completionDate}
+                                completionDate={cert.completedAt || ''}
                                 certificateNumber={cert.certificateNumber}
                               />
                             </div>
