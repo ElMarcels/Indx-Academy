@@ -1,0 +1,150 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-dark-800;
+  }
+
+  body {
+    @apply bg-dark-950 text-dark-100 antialiased;
+    background-image: 
+      radial-gradient(at 20% 20%, rgba(99, 102, 241, 0.08) 0px, transparent 50%),
+      radial-gradient(at 80% 80%, rgba(217, 70, 239, 0.06) 0px, transparent 50%),
+      radial-gradient(at 50% 50%, rgba(16, 185, 129, 0.04) 0px, transparent 50%);
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    @apply bg-brand-600/30 text-white;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-dark-950;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-dark-700 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-brand-600;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white font-semibold py-2.5 px-6 rounded-xl transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-brand-600/20 hover:shadow-brand-500/40 hover:-translate-y-0.5;
+  }
+
+  .btn-secondary {
+    @apply bg-dark-800/80 hover:bg-dark-700 text-dark-100 font-medium py-2.5 px-6 rounded-xl border border-dark-700/50 transition-all duration-300 active:scale-95 hover:border-dark-600 hover:-translate-y-0.5 backdrop-blur-sm;
+  }
+
+  .btn-outline {
+    @apply border-2 border-brand-500/50 text-brand-400 hover:bg-brand-600/10 hover:border-brand-400 font-medium py-2.5 px-6 rounded-xl transition-all duration-300 hover:-translate-y-0.5;
+  }
+
+  .btn-danger {
+    @apply bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-600/30 font-medium py-2.5 px-6 rounded-xl transition-all duration-300 hover:-translate-y-0.5;
+  }
+
+  .btn-glow {
+    @apply btn-primary animate-glow;
+  }
+
+  .input {
+    @apply w-full bg-dark-900/80 border border-dark-700/50 rounded-xl px-4 py-2.5 text-dark-100 placeholder-dark-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all duration-300 backdrop-blur-sm;
+  }
+
+  .input:focus {
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
+  }
+
+  .card {
+    @apply bg-dark-900/80 border border-dark-800/50 rounded-2xl overflow-hidden transition-all duration-300 backdrop-blur-sm;
+  }
+
+  .card-hover {
+    @apply card hover:border-brand-500/30 hover:shadow-xl hover:shadow-brand-600/10 hover:-translate-y-1;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
+  }
+
+  .badge-green {
+    @apply badge bg-emerald-500/15 text-emerald-400 border border-emerald-500/25;
+  }
+
+  .badge-blue {
+    @apply badge bg-brand-500/15 text-brand-400 border border-brand-500/25;
+  }
+
+  .badge-purple {
+    @apply badge bg-accent-500/15 text-accent-400 border border-accent-500/25;
+  }
+
+  .badge-yellow {
+    @apply badge bg-yellow-500/15 text-yellow-400 border border-yellow-500/25;
+  }
+
+  .badge-red {
+    @apply badge bg-red-500/15 text-red-400 border border-red-500/25;
+  }
+
+  .badge-free {
+    @apply badge bg-gradient-to-r from-emerald-500/20 to-emerald-400/10 text-emerald-400 border border-emerald-500/30;
+  }
+
+  .section {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .gradient-text {
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-brand-400 via-accent-400 to-emerald-400;
+  }
+
+  .glass {
+    @apply bg-dark-900/60 backdrop-blur-xl border border-dark-800/50 rounded-2xl;
+  }
+
+  .glow-border {
+    @apply relative;
+  }
+
+  .glow-border::before {
+    content: '';
+    @apply absolute -inset-px rounded-2xl bg-gradient-to-r from-brand-500/20 via-accent-500/20 to-emerald-500/20 opacity-0 transition-opacity duration-300;
+  }
+
+  .glow-border:hover::before {
+    @apply opacity-100;
+  }
+
+  .noise-overlay {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.02'/%3E%3C/svg%3E");
+  }
+
+  .shimmer {
+    background: linear-gradient(
+      110deg,
+      transparent 33%,
+      rgba(255, 255, 255, 0.05) 50%,
+      transparent 67%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

@@ -1,0 +1,431 @@
+'use client';
+
+import { useSession } from 'next-auth/react';
+import { useRouter, useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import toast from 'react-hot-toast';
+import {
+  FiArrowLeft, FiPlus, FiTrash2, FiFileText, FiEdit2, FiSave, FiPaperclip, FiX,
+} from 'react-icons/fi';
+
+interface LessonFile {
+  name: string;
+  url: string;
+  size?: number;
+  type?: string;
+}
+
+interface Module {
+  id: string;
+  title: string;
+  order: number;
+  lessons: Lesson[];
+}
+
+interface Lesson {
+  id: string;
+  title: string;
+  content: string | null;
+  task: string | null;
+  isFree: boolean;
+  order: number;
+}
+
+interface Course {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  isPublished: boolean;
+  level: string;
+  category: string | null;
+  duration: string | null;
+  thumbnail: string | null;
+  modules: Module[];
+}
+
+export default function EditCoursePage() {
+  const params = useParams();
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [course, setCourse] = useState<Course | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const [showModuleForm, setShowModuleForm] = useState(false);
+  const [moduleTitle, setModuleTitle] = useState('');
+
+  const [showLessonForm, setShowLessonForm] = useState<string | null>(null);
+  const [lessonForm, setLessonForm] = useState({
+    title: '',
+    description: '',
+    content: '',
+    task: '',
+    isFree: false,
+  });
+
+  const [editMode, setEditMode] = useState(false);
+  const [courseForm, setCourseForm] = useState({
+    title: '',
+    description: '',
+    level: 'BEGINNER',
+    category: '',
+    duration: '',
+    thumbnail: '',
+  });
+
+  useEffect(() => {
+    if (status === 'authenticated' && (session?.user as any)?.role !== 'ADMIN') {
+      router.push('/dashboard');
+    }
+  }, [status, session, router]);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await fetch(`/api/admin/courses/${params.courseId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setCourse(data);
+          setCourseForm({
+            title: data.title,
+            description: data.description,
+            level: data.level,
+            category: data.category || '',
+            duration: data.duration || '',
+            thumbnail: data.thumbnail || '',
+          });
+        }
+      } catch {
+        toast.error('Error al cargar curso');
+      } finally {
+        setLoading(false);
+      }
+    }
+    if (status === 'authenticated') load();
+  }, [params.courseId, status]);
+
+  async function addModule() {
+    if (!moduleTitle.trim()) return;
+
+    try {
+      const res = await fetch('/api/modules', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: moduleTitle,
+          courseId: course!.id,
+          order: course!.modules.length + 1,
+        }),
+      });
+
+      if (res.ok) {
+        const mod = await res.json();
+        setCourse({
+          ...course!,
+          modules: [...course!.modules, { ...mod, lessons: [] }],
+        });
+        setModuleTitle('');
+        setShowModuleForm(false);
+        toast.success('Módulo creado');
+      }
+    } catch {
+      toast.error('Error al crear módulo');
+    }
+  }
+
+  async function addLesson(moduleId: string) {
+    if (!lessonForm.title.trim()) return;
+
+    try {
+      const mod = course!.modules.find((m) => m.id === moduleId);
+      const res = await fetch(`/api/courses/${course!.id}/lessons`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...lessonForm,
+          moduleId,
+          order: (mod?.lessons.length || 0) + 1,
+        }),
+      });
+
+      if (res.ok) {
+        const lesson = await res.json();
+        setCourse({
+          ...course!,
+          modules: course!.modules.map((m) =>
+            m.id === moduleId ? { ...m, lessons: [...m.lessons, lesson] } : m
+          ),
+        });
+        setLessonForm({ title: '', description: '', content: '', task: '', isFree: false });
+        setShowLessonForm(null);
+        toast.success('Lección creada');
+      }
+    } catch {
+      toast.error('Error al crear lección');
+    }
+  }
+
+  async function deleteLesson(lessonId: string, moduleId: string) {
+    if (!confirm('¿Eliminar esta lección?')) return;
+
+    try {
+      const res = await fetch(`/api/admin/lessons/${lessonId}`, { method: 'DELETE' });
+      if (res.ok) {
+        setCourse({
+          ...course!,
+          modules: course!.modules.map((m) =>
+            m.id === moduleId
+              ? { ...m, lessons: m.lessons.filter((l) => l.id !== lessonId) }
+              : m
+          ),
+        });
+        toast.success('Lección eliminada');
+      }
+    } catch {
+      toast.error('Error al eliminar');
+    }
+  }
+
+  async function saveCourse() {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/courses/${course!.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...courseForm,
+          duration: courseForm.duration || null,
+          thumbnail: courseForm.thumbnail || null,
+          category: courseForm.category || null,
+        }),
+      });
+
+      if (res.ok) {
+        setCourse({ ...course!, ...courseForm });
+        setEditMode(false);
+        toast.success('Curso actualizado');
+      }
+    } catch {
+      toast.error('Error al guardar');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="py-12 section">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-dark-800 rounded w-1/4" />
+          <div className="h-48 bg-dark-800 rounded-2xl" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!course) {
+    return (
+      <div className="py-20 section text-center">
+        <h2 className="text-2xl font-bold text-white mb-4">Curso no encontrado</h2>
+        <Link href="/admin/courses" className="btn-primary">Volver</Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="py-12">
+      <div className="section max-w-4xl">
+        <Link href="/admin/courses" className="inline-flex items-center gap-1 text-dark-400 hover:text-white text-sm mb-6 transition-colors">
+          <FiArrowLeft size={14} /> Volver a cursos
+        </Link>
+
+        <div className="card p-6 mb-6">
+          {editMode ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-lg font-semibold text-white">Editar Curso</h2>
+                <div className="flex gap-2">
+                  <button onClick={saveCourse} disabled={saving} className="btn-primary text-sm py-1.5 flex items-center gap-1">
+                    <FiSave size={14} /> {saving ? 'Guardando...' : 'Guardar'}
+                  </button>
+                  <button onClick={() => setEditMode(false)} className="btn-secondary text-sm py-1.5">Cancelar</button>
+                </div>
+              </div>
+              <input
+                type="text"
+                value={courseForm.title}
+                onChange={(e) => setCourseForm({ ...courseForm, title: e.target.value })}
+                className="input"
+                placeholder="Título"
+              />
+              <textarea
+                value={courseForm.description}
+                onChange={(e) => setCourseForm({ ...courseForm, description: e.target.value })}
+                className="input min-h-[80px] resize-y"
+                placeholder="Descripción"
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <select
+                  value={courseForm.level}
+                  onChange={(e) => setCourseForm({ ...courseForm, level: e.target.value })}
+                  className="input"
+                >
+                  <option value="BEGINNER">Principiante</option>
+                  <option value="INTERMEDIATE">Intermedio</option>
+                  <option value="ADVANCED">Avanzado</option>
+                </select>
+                <input
+                  type="text"
+                  value={courseForm.duration}
+                  onChange={(e) => setCourseForm({ ...courseForm, duration: e.target.value })}
+                  className="input"
+                  placeholder="Duración (ej: 40h)"
+                />
+              </div>
+            </div>
+          ) : (
+            <div>
+              <div className="flex items-start justify-between mb-2">
+                <div>
+                  <h1 className="text-2xl font-bold text-white">{course.title}</h1>
+                  <p className="text-dark-400 text-sm mt-1">{course.description}</p>
+                </div>
+                <button onClick={() => setEditMode(true)} className="btn-secondary text-sm py-1.5 flex items-center gap-1 flex-shrink-0">
+                  <FiEdit2 size={14} /> Editar
+                </button>
+              </div>
+              <div className="flex items-center gap-4 mt-3 text-sm text-dark-500">
+                <span className="capitalize">{course.level.toLowerCase()}</span>
+                {course.category && <span>{course.category}</span>}
+                <span>{course.modules.length} módulos</span>
+                <span className="badge-free text-[10px]">100% Gratis</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-white">Módulos y Lecciones</h2>
+          <button
+            onClick={() => setShowModuleForm(!showModuleForm)}
+            className="btn-primary text-sm flex items-center gap-1"
+          >
+            <FiPlus size={14} /> Nuevo Módulo
+          </button>
+        </div>
+
+        {showModuleForm && (
+          <div className="card p-4 mb-4 flex gap-3">
+            <input
+              type="text"
+              value={moduleTitle}
+              onChange={(e) => setModuleTitle(e.target.value)}
+              placeholder="Nombre del módulo"
+              className="input flex-1"
+              onKeyDown={(e) => e.key === 'Enter' && addModule()}
+            />
+            <button onClick={addModule} className="btn-primary text-sm">Crear</button>
+            <button onClick={() => setShowModuleForm(false)} className="btn-secondary text-sm">Cancelar</button>
+          </div>
+        )}
+
+        <div className="space-y-4">
+          {course.modules.map((mod) => (
+            <div key={mod.id} className="card overflow-hidden">
+              <div className="p-4 border-b border-dark-800/50 bg-dark-800/30">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-white font-semibold">
+                    <span className="text-dark-500 mr-2">#{mod.order}</span>
+                    {mod.title}
+                  </h3>
+                  <button
+                    onClick={() => setShowLessonForm(showLessonForm === mod.id ? null : mod.id)}
+                    className="btn-outline text-xs py-1 px-3 flex items-center gap-1"
+                  >
+                    <FiPlus size={12} /> Lección
+                  </button>
+                </div>
+              </div>
+
+              {showLessonForm === mod.id && (
+                <div className="p-4 border-b border-dark-800/50 bg-dark-900/50">
+                  <div className="space-y-3 mb-3">
+                    <input
+                      type="text"
+                      value={lessonForm.title}
+                      onChange={(e) => setLessonForm({ ...lessonForm, title: e.target.value })}
+                      placeholder="Título de la lección"
+                      className="input"
+                    />
+                    <input
+                      type="text"
+                      value={lessonForm.description}
+                      onChange={(e) => setLessonForm({ ...lessonForm, description: e.target.value })}
+                      placeholder="Descripción corta (opcional)"
+                      className="input"
+                    />
+                    <textarea
+                      value={lessonForm.content}
+                      onChange={(e) => setLessonForm({ ...lessonForm, content: e.target.value })}
+                      placeholder="Contenido de la lección (soporta texto largo)"
+                      className="input min-h-[120px] resize-y"
+                    />
+                    <textarea
+                      value={lessonForm.task}
+                      onChange={(e) => setLessonForm({ ...lessonForm, task: e.target.value })}
+                      placeholder="Tarea o ejercicio para el estudiante (opcional)"
+                      className="input min-h-[80px] resize-y"
+                    />
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 text-sm text-dark-300 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={lessonForm.isFree}
+                        onChange={(e) => setLessonForm({ ...lessonForm, isFree: e.target.checked })}
+                        className="rounded border-dark-600"
+                      />
+                      Lección gratuita
+                    </label>
+                    <button onClick={() => addLesson(mod.id)} className="btn-primary text-sm">Crear Lección</button>
+                    <button onClick={() => setShowLessonForm(null)} className="btn-secondary text-sm">Cancelar</button>
+                  </div>
+                </div>
+              )}
+
+              <div className="divide-y divide-dark-800/50">
+                {mod.lessons.map((lesson) => (
+                  <div key={lesson.id} className="px-4 py-3 flex items-center gap-3">
+                    <FiFileText size={14} className="text-dark-500 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm text-dark-200 block truncate">{lesson.title}</span>
+                      {lesson.content && (
+                        <span className="text-xs text-dark-600 block truncate">Contenido: {lesson.content.substring(0, 60)}...</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {lesson.isFree && <span className="badge-green text-[10px]">Gratis</span>}
+                      <button
+                        onClick={() => deleteLesson(lesson.id, mod.id)}
+                        className="text-dark-500 hover:text-red-400 transition-colors"
+                      >
+                        <FiTrash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                {mod.lessons.length === 0 && (
+                  <div className="px-4 py-6 text-center text-dark-600 text-sm">
+                    No hay lecciones. Añade la primera.
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
