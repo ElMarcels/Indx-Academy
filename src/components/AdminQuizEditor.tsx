@@ -38,7 +38,12 @@ export function AdminQuizEditor({ moduleId, existingQuiz, onUpdate }: AdminQuizE
   const [quiz, setQuiz] = useState<QuizData>({
     title: existingQuiz?.title || '',
     description: existingQuiz?.description || '',
-    questions: existingQuiz?.questions || [
+    questions: existingQuiz?.questions?.map((q) => ({
+      question: q.question,
+      options: q.options,
+      correctIndex: q.correctIndex,
+      explanation: q.explanation || '',
+    })) || [
       { question: '', options: ['', '', '', ''], correctIndex: 0, explanation: '' },
     ],
   });
