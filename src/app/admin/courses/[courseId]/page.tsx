@@ -347,7 +347,8 @@ export default function EditCoursePage() {
             >
               <FiPlus size={14} /> Nuevo Módulo
             </button>
-        </div>
+          </div>
+        )}
 
         {activeTab === 'challenges' && (
           <div className="flex items-center justify-between mb-4">
