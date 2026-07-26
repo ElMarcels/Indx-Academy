@@ -7,7 +7,11 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import {
   FiArrowLeft, FiPlus, FiTrash2, FiFileText, FiEdit2, FiSave, FiPaperclip, FiX,
+  FiAward, FiCode,
 } from 'react-icons/fi';
+import { MarkdownEditor } from '@/components/MarkdownEditor';
+import { AdminQuizEditor } from '@/components/AdminQuizEditor';
+import { AdminChallengeEditor } from '@/components/AdminChallengeEditor';
 
 interface LessonFile {
   name: string;
@@ -21,6 +25,7 @@ interface Module {
   title: string;
   order: number;
   lessons: Lesson[];
+  quiz?: { id: string; title: string; description: string | null; questions: any[] } | null;
 }
 
 interface Lesson {
@@ -64,6 +69,10 @@ export default function EditCoursePage() {
     task: '',
     isFree: false,
   });
+
+  const [activeTab, setActiveTab] = useState<'modules' | 'challenges'>('modules');
+  const [showQuizEditor, setShowQuizEditor] = useState<string | null>(null);
+  const [showChallengeForm, setShowChallengeForm] = useState(false);
 
   const [editMode, setEditMode] = useState(false);
   const [courseForm, setCourseForm] = useState({
@@ -306,15 +315,52 @@ export default function EditCoursePage() {
           )}
         </div>
 
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-white">Módulos y Lecciones</h2>
+        <div className="flex items-center gap-2 mb-4">
           <button
-            onClick={() => setShowModuleForm(!showModuleForm)}
-            className="btn-primary text-sm flex items-center gap-1"
+            onClick={() => setActiveTab('modules')}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+              activeTab === 'modules'
+                ? 'bg-brand-600 text-white'
+                : 'text-dark-400 hover:text-white bg-dark-800/50'
+            }`}
           >
-            <FiPlus size={14} /> Nuevo Módulo
+            Módulos y Lecciones
+          </button>
+          <button
+            onClick={() => setActiveTab('challenges')}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+              activeTab === 'challenges'
+                ? 'bg-brand-600 text-white'
+                : 'text-dark-400 hover:text-white bg-dark-800/50'
+            }`}
+          >
+            Desafíos
           </button>
         </div>
+
+        {activeTab === 'modules' && (
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-white">Módulos y Lecciones</h2>
+            <button
+              onClick={() => setShowModuleForm(!showModuleForm)}
+              className="btn-primary text-sm flex items-center gap-1"
+            >
+              <FiPlus size={14} /> Nuevo Módulo
+            </button>
+          </div>
+        )}
+
+        {activeTab === 'challenges' && (
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-white">Desafíos del Curso</h2>
+            <button
+              onClick={() => setShowChallengeForm(!showChallengeForm)}
+              className="btn-primary text-sm flex items-center gap-1"
+            >
+              <FiPlus size={14} /> Nuevo Desafío
+            </button>
+          </div>
+        )}
 
         {showModuleForm && (
           <div className="card p-4 mb-4 flex gap-3">
@@ -340,12 +386,20 @@ export default function EditCoursePage() {
                     <span className="text-dark-500 mr-2">#{mod.order}</span>
                     {mod.title}
                   </h3>
-                  <button
-                    onClick={() => setShowLessonForm(showLessonForm === mod.id ? null : mod.id)}
-                    className="btn-outline text-xs py-1 px-3 flex items-center gap-1"
-                  >
-                    <FiPlus size={12} /> Lección
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setShowQuizEditor(showQuizEditor === mod.id ? null : mod.id)}
+                      className="btn-secondary text-xs py-1 px-3 flex items-center gap-1"
+                    >
+                      <FiAward size={12} /> Quiz
+                    </button>
+                    <button
+                      onClick={() => setShowLessonForm(showLessonForm === mod.id ? null : mod.id)}
+                      className="btn-outline text-xs py-1 px-3 flex items-center gap-1"
+                    >
+                      <FiPlus size={12} /> Lección
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -366,17 +420,17 @@ export default function EditCoursePage() {
                       placeholder="Descripción corta (opcional)"
                       className="input"
                     />
-                    <textarea
+                    <MarkdownEditor
                       value={lessonForm.content}
-                      onChange={(e) => setLessonForm({ ...lessonForm, content: e.target.value })}
-                      placeholder="Contenido de la lección (soporta texto largo)"
-                      className="input min-h-[120px] resize-y"
+                      onChange={(val) => setLessonForm({ ...lessonForm, content: val })}
+                      placeholder="Contenido de la lección en Markdown..."
+                      label="Contenido"
                     />
-                    <textarea
+                    <MarkdownEditor
                       value={lessonForm.task}
-                      onChange={(e) => setLessonForm({ ...lessonForm, task: e.target.value })}
-                      placeholder="Tarea o ejercicio para el estudiante (opcional)"
-                      className="input min-h-[80px] resize-y"
+                      onChange={(val) => setLessonForm({ ...lessonForm, task: val })}
+                      placeholder="Tarea o ejercicio para el estudiante..."
+                      label="Tarea"
                     />
                   </div>
                   <div className="flex items-center gap-4">
@@ -422,9 +476,41 @@ export default function EditCoursePage() {
                   </div>
                 )}
               </div>
+
+              {showQuizEditor === mod.id && (
+                <div className="p-4 border-t border-dark-800/50">
+                  <AdminQuizEditor
+                    moduleId={mod.id}
+                    existingQuiz={mod.quiz || undefined}
+                    onUpdate={() => {
+                      toast.success('Quiz actualizado');
+                      window.location.reload();
+                    }}
+                  />
+                </div>
+              )}
             </div>
           ))}
         </div>
+        )}
+
+        {activeTab === 'challenges' && (
+          <div className="space-y-4">
+            {showChallengeForm && (
+              <AdminChallengeEditor
+                courseId={course.id}
+                onUpdate={() => {
+                  setShowChallengeForm(false);
+                  window.location.reload();
+                }}
+              />
+            )}
+            <div className="card p-8 text-center">
+              <FiCode size={32} className="text-dark-600 mx-auto mb-3" />
+              <p className="text-dark-400">Los desafíos se gestionan desde la vista del curso.</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

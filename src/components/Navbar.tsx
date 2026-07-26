@@ -4,10 +4,12 @@ import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiMenu, FiX, FiUser, FiBook, FiLogOut, FiShield, FiStar } from 'react-icons/fi';
+import { FiMenu, FiX, FiUser, FiBook, FiLogOut, FiShield, FiStar, FiSun, FiMoon } from 'react-icons/fi';
+import { useTheme } from './ThemeProvider';
 
 export function Navbar() {
   const { data: session, status } = useSession();
+  const { theme, toggleTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -20,7 +22,7 @@ export function Navbar() {
   return (
     <nav className={`sticky top-0 z-50 transition-all duration-500 ${
       scrolled 
-        ? 'bg-dark-950/90 backdrop-blur-2xl border-b border-dark-800/50 shadow-xl shadow-dark-950/50' 
+        ? 'bg-dark-950/90 backdrop-blur-2xl border-b border-dark-800/50 shadow-xl shadow-dark-950/50 scrolled' 
         : 'bg-transparent backdrop-blur-sm'
     }`}>
       <div className="section">
@@ -46,6 +48,16 @@ export function Navbar() {
               Cursos
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-brand-500 to-accent-500 group-hover:w-full transition-all duration-300" />
             </Link>
+
+            <motion.button
+              onClick={toggleTheme}
+              className="text-dark-300 hover:text-white transition-colors p-2 rounded-lg hover:bg-dark-800/50"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              title={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
+            >
+              {theme === 'dark' ? <FiSun size={16} /> : <FiMoon size={16} />}
+            </motion.button>
 
             {status === 'loading' ? (
               <div className="w-20 h-8 bg-dark-800 rounded-xl animate-pulse" />
@@ -125,6 +137,13 @@ export function Navbar() {
                 >
                   Cursos
                 </Link>
+                <button
+                  onClick={() => { toggleTheme(); }}
+                  className="flex items-center gap-2 text-dark-300 hover:text-white py-2 text-sm"
+                >
+                  {theme === 'dark' ? <FiSun size={14} /> : <FiMoon size={14} />}
+                  {theme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}
+                </button>
                 {session ? (
                   <>
                     <Link

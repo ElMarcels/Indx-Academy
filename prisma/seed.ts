@@ -274,6 +274,108 @@ typeof null      // "object" (bug conocido)
     },
   });
 
+  // Create quiz for JS module 1
+  const jsQuiz = await prisma.quiz.create({
+    data: {
+      title: 'Quiz: Fundamentos de JavaScript',
+      description: 'Pon a prueba tus conocimientos sobre variables, tipos de datos y operadores.',
+      moduleId: jsModule1.id,
+      questions: {
+        create: [
+          {
+            question: '¿Cuál es la diferencia principal entre let y const?',
+            options: JSON.stringify([
+              'let permite reasignar, const no',
+              'const es más rápido que let',
+              'let es global, const es local',
+              'No hay diferencia',
+            ]),
+            correctIndex: 0,
+            explanation: 'const declara una constante que no puede ser reasignada. let permite reasignación.',
+            order: 1,
+          },
+          {
+            question: '¿Qué retorna typeof null?',
+            options: JSON.stringify(['"null"', '"undefined"', '"object"', '"boolean"']),
+            correctIndex: 2,
+            explanation: 'Es un bug histórico de JavaScript que typeof null retorna "object".',
+            order: 2,
+          },
+          {
+            question: '¿Cuál es la forma correcta de declarar una variable que no cambiará?',
+            options: JSON.stringify([
+              'var nombre = "Ana"',
+              'let nombre = "Ana"',
+              'const nombre = "Ana"',
+              'variable nombre = "Ana"',
+            ]),
+            correctIndex: 2,
+            explanation: 'const es la mejor opción cuando el valor no será reasignado.',
+            order: 3,
+          },
+        ],
+      },
+    },
+  });
+
+  // Create challenge for JS course
+  await prisma.challenge.create({
+    data: {
+      title: 'Calculadora de arrays',
+      description: 'Crea una función en JavaScript que reciba un array de números y realice las siguientes operaciones:\n\n1. Suma de todos los elementos\n2. Promedio\n3. Valor máximo\n4. Valor mínimo\n5. Filtrar números pares\n\nTu función debe devolver un objeto con estos 5 resultados. Incluye manejo de arrays vacíos.',
+      difficulty: 'EASY',
+      points: 10,
+      courseId: jsCourse.id,
+    },
+  });
+
+  await prisma.challenge.create({
+    data: {
+      title: 'Sistema de colas (Queue)',
+      description: 'Implementa una clase Queue en JavaScript con los métodos:\n\n- enqueue(item): Agrega un elemento al final\n- dequeue(): Remueve y retorna el primer elemento\n- peek(): Retorna el primer elemento sin removerlo\n- isEmpty(): Retorna true si está vacía\n- size(): Retorna el tamaño\n- toString(): Retorna representación en string\n\nIncluye manejo de errores cuando la cola está vacía.',
+      difficulty: 'MEDIUM',
+      points: 25,
+      courseId: jsCourse.id,
+    },
+  });
+
+  // Create quiz for React course module 1
+  await prisma.quiz.create({
+    data: {
+      title: 'Quiz: Fundamentos de React',
+      description: 'Evalúa tu comprensión de componentes, JSX y props.',
+      moduleId: reactModule1.id,
+      questions: {
+        create: [
+          {
+            question: '¿Qué es JSX?',
+            options: JSON.stringify([
+              'Un lenguaje de programación',
+              'Una extensión de sintaxis para JavaScript',
+              'Un framework CSS',
+              'Una base de datos',
+            ]),
+            correctIndex: 1,
+            explanation: 'JSX es una extensión de sintaxis de JavaScript que permite escribir HTML-like dentro del código de React.',
+            order: 1,
+          },
+          {
+            question: '¿Cómo se pasan datos de un componente padre a uno hijo?',
+            options: JSON.stringify([
+              'Usando state',
+              'Usando props',
+              'Usando context',
+              'Usando refs',
+            ]),
+            correctIndex: 1,
+            explanation: 'Las props (propiedades) son la forma estándar de pasar datos de padre a hijo.',
+            order: 2,
+          },
+        ],
+      },
+    },
+  });
+
   // Enroll demo student in JS course
   await prisma.enrollment.create({
     data: {

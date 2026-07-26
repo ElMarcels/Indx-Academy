@@ -17,6 +17,7 @@ export async function GET(
           },
         },
         files: true,
+        quiz: { select: { id: true } },
       },
     });
 

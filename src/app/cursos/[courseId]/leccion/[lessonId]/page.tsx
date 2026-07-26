@@ -10,6 +10,8 @@ import {
   FiCheck, FiArrowLeft, FiArrowRight, FiClock, FiFileText,
   FiDownload, FiBookOpen, FiClipboard,
 } from 'react-icons/fi';
+import { MarkdownRenderer } from '@/components/MarkdownRenderer';
+import { QuizComponent } from '@/components/QuizComponent';
 
 interface LessonFile {
   id: string;
@@ -32,6 +34,7 @@ interface Lesson {
     course: { id: string; title: string; slug: string };
   };
   files: LessonFile[];
+  quiz?: { id: string } | null;
 }
 
 interface AllLesson {
@@ -176,9 +179,7 @@ export default function LessonPage() {
                 <FiFileText size={18} />
                 <h2 className="font-semibold text-lg">Contenido de la Lección</h2>
               </div>
-              <div className="prose prose-invert max-w-none">
-                <div className="text-dark-200 leading-relaxed whitespace-pre-wrap">{lesson.content}</div>
-              </div>
+              <MarkdownRenderer content={lesson.content} />
             </div>
           )}
 
@@ -189,7 +190,14 @@ export default function LessonPage() {
                 <FiClipboard size={18} />
                 <h2 className="font-semibold text-lg">Tarea</h2>
               </div>
-              <div className="text-dark-200 leading-relaxed whitespace-pre-wrap">{lesson.task}</div>
+              <MarkdownRenderer content={lesson.task} />
+            </div>
+          )}
+
+          {/* Quiz */}
+          {lesson.quiz && (
+            <div className="mb-6">
+              <QuizComponent quizId={lesson.quiz.id} />
             </div>
           )}
 

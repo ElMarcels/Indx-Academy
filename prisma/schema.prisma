@@ -56,12 +56,14 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts       Account[]
-  sessions       Session[]
-  enrollments    Enrollment[]
-  lessonProgress LessonProgress[]
-  comments       Comment[]
-  createdCourses Course[]        @relation("CourseAuthor")
+  accounts         Account[]
+  sessions         Session[]
+  enrollments      Enrollment[]
+  lessonProgress   LessonProgress[]
+  quizAttempts     QuizAttempt[]
+  challengeSubmissions ChallengeSubmission[]
+  comments         Comment[]
+  createdCourses   Course[]        @relation("CourseAuthor")
 }
 
 // ─── Courses ────────────────────────────────────────────
@@ -84,6 +86,7 @@ model Course {
   modules     Module[]
   enrollments Enrollment[]
   comments    Comment[]
+  challenges  Challenge[]
 }
 
 model Module {
@@ -95,6 +98,7 @@ model Module {
 
   course  Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   lessons Lesson[]
+  quizzes Quiz[]
 
   @@unique([courseId, order])
 }
@@ -103,7 +107,7 @@ model Lesson {
   id          String   @id @default(cuid())
   title       String
   description String?
-  content     String?  // Rich text content of the lesson
+  content     String?  // Markdown content
   task        String?  // Assignment / task description
   order       Int
   isFree      Boolean  @default(false)
@@ -155,6 +159,79 @@ model LessonProgress {
   lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@unique([userId, lessonId])
+}
+
+// ─── Quizzes ────────────────────────────────────────────
+
+model Quiz {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  moduleId    String
+  createdAt   DateTime @default(now())
+
+  module    Module          @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  questions QuizQuestion[]
+  attempts  QuizAttempt[]
+}
+
+model QuizQuestion {
+  id            String   @id @default(cuid())
+  question      String
+  options       String   // JSON array of options
+  correctIndex  Int      // Index of correct answer
+  explanation   String?
+  order         Int
+  quizId        String
+  createdAt     DateTime @default(now())
+
+  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+}
+
+model QuizAttempt {
+  id        String   @id @default(cuid())
+  userId    String
+  quizId    String
+  score     Int      // Number of correct answers
+  total     Int      // Total questions
+  answers   String   // JSON array of user answers
+  passed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quiz Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, quizId])
+}
+
+// ─── Challenges ─────────────────────────────────────────
+
+model Challenge {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  difficulty  String   @default("EASY") // EASY | MEDIUM | HARD
+  points      Int      @default(10)
+  courseId    String
+  createdAt   DateTime @default(now())
+
+  course      Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  submissions ChallengeSubmission[]
+}
+
+model ChallengeSubmission {
+  id        String   @id @default(cuid())
+  userId    String
+  challengeId String
+  content   String   // User's solution/code
+  status    String   @default("PENDING") // PENDING | APPROVED | REJECTED
+  feedback  String?
+  createdAt DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, challengeId])
 }
 
 // ─── Comments ───────────────────────────────────────────

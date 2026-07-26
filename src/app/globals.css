@@ -7,6 +7,91 @@
     @apply border-dark-800;
   }
 
+  :root {
+    --toast-bg: #212529;
+    --toast-color: #f1f3f5;
+    --toast-border: #343a40;
+  }
+
+  html.light {
+    --toast-bg: #ffffff;
+    --toast-color: #212529;
+    --toast-border: #dee2e6;
+  }
+
+  html.light body {
+    @apply bg-gray-50 text-gray-900;
+    background-image: 
+      radial-gradient(at 20% 20%, rgba(99, 102, 241, 0.06) 0px, transparent 50%),
+      radial-gradient(at 80% 80%, rgba(217, 70, 239, 0.04) 0px, transparent 50%),
+      radial-gradient(at 50% 50%, rgba(16, 185, 129, 0.03) 0px, transparent 50%);
+    background-attachment: fixed;
+  }
+
+  html.light * {
+    @apply border-gray-200;
+  }
+
+  html.light .card {
+    @apply bg-white border-gray-200;
+  }
+
+  html.light .card-hover {
+    @apply bg-white border-gray-200 hover:border-brand-400 hover:shadow-brand-600/5;
+  }
+
+  html.light .input {
+    @apply bg-white border-gray-300 text-gray-900 placeholder-gray-400;
+  }
+
+  html.light .btn-secondary {
+    @apply bg-gray-100 hover:bg-gray-200 text-gray-900 border-gray-300;
+  }
+
+  html.light .badge-free {
+    @apply bg-emerald-100 text-emerald-700 border-emerald-200;
+  }
+
+  html.light nav {
+    @apply text-gray-900;
+  }
+
+  html.light nav .text-dark-300 {
+    @apply text-gray-600 hover:text-gray-900;
+  }
+
+  html.light nav.scrolled {
+    @apply bg-white/90 border-gray-200 shadow-gray-200/50;
+  }
+
+  html.light .gradient-text {
+    @apply from-brand-600 via-accent-600 to-emerald-600;
+  }
+
+  html.light .badge-green {
+    @apply bg-emerald-100 text-emerald-700 border-emerald-200;
+  }
+
+  html.light .badge-blue {
+    @apply bg-brand-100 text-brand-700 border-brand-200;
+  }
+
+  html.light .badge-purple {
+    @apply bg-accent-100 text-accent-700 border-accent-200;
+  }
+
+  html.light .badge-yellow {
+    @apply bg-yellow-100 text-yellow-700 border-yellow-200;
+  }
+
+  html.light .badge-red {
+    @apply bg-red-100 text-red-700 border-red-200;
+  }
+
+  html.light .gradient-text {
+    @apply from-brand-600 via-accent-600 to-emerald-600;
+  }
+
   body {
     @apply bg-dark-950 text-dark-100 antialiased;
     background-image: 
@@ -28,8 +113,16 @@
     @apply bg-dark-950;
   }
 
+  html.light ::-webkit-scrollbar-track {
+    @apply bg-gray-100;
+  }
+
   ::-webkit-scrollbar-thumb {
     @apply bg-dark-700 rounded-full;
+  }
+
+  html.light ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300;
   }
 
   ::-webkit-scrollbar-thumb:hover {
@@ -50,12 +143,12 @@
     @apply border-2 border-brand-500/50 text-brand-400 hover:bg-brand-600/10 hover:border-brand-400 font-medium py-2.5 px-6 rounded-xl transition-all duration-300 hover:-translate-y-0.5;
   }
 
-  .btn-danger {
-    @apply bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-600/30 font-medium py-2.5 px-6 rounded-xl transition-all duration-300 hover:-translate-y-0.5;
+  html.light .btn-outline {
+    @apply border-brand-500/50 text-brand-600 hover:bg-brand-50;
   }
 
-  .btn-glow {
-    @apply btn-primary animate-glow;
+  .btn-danger {
+    @apply bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-600/30 font-medium py-2.5 px-6 rounded-xl transition-all duration-300 hover:-translate-y-0.5;
   }
 
   .input {
@@ -114,23 +207,6 @@
     @apply bg-dark-900/60 backdrop-blur-xl border border-dark-800/50 rounded-2xl;
   }
 
-  .glow-border {
-    @apply relative;
-  }
-
-  .glow-border::before {
-    content: '';
-    @apply absolute -inset-px rounded-2xl bg-gradient-to-r from-brand-500/20 via-accent-500/20 to-emerald-500/20 opacity-0 transition-opacity duration-300;
-  }
-
-  .glow-border:hover::before {
-    @apply opacity-100;
-  }
-
-  .noise-overlay {
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.02'/%3E%3C/svg%3E");
-  }
-
   .shimmer {
     background: linear-gradient(
       110deg,
@@ -141,6 +217,42 @@
     background-size: 200% 100%;
     animation: shimmer 2s linear infinite;
   }
+
+  /* Markdown content styles */
+  .markdown-content h1 { @apply text-2xl font-bold text-white mb-4 mt-6; }
+  .markdown-content h2 { @apply text-xl font-bold text-white mb-3 mt-5; }
+  .markdown-content h3 { @apply text-lg font-semibold text-white mb-2 mt-4; }
+  .markdown-content p { @apply text-dark-200 mb-3 leading-relaxed; }
+  .markdown-content ul { @apply list-disc pl-6 mb-3 space-y-1; }
+  .markdown-content ol { @apply list-decimal pl-6 mb-3 space-y-1; }
+  .markdown-content li { @apply text-dark-200; }
+  .markdown-content code { @apply bg-dark-800 text-brand-400 px-1.5 py-0.5 rounded text-sm font-mono; }
+  .markdown-content pre { @apply bg-dark-800 rounded-xl p-4 mb-4 overflow-x-auto; }
+  .markdown-content pre code { @apply bg-transparent p-0 text-dark-100; }
+  .markdown-content blockquote { @apply border-l-4 border-brand-500 pl-4 italic text-dark-300 mb-3; }
+  .markdown-content a { @apply text-brand-400 hover:text-brand-300 underline; }
+  .markdown-content strong { @apply text-white font-semibold; }
+  .markdown-content em { @apply italic; }
+  .markdown-content table { @apply w-full border-collapse mb-4; }
+  .markdown-content th { @apply bg-dark-800 text-left p-2 text-white text-sm; }
+  .markdown-content td { @apply border-t border-dark-800 p-2 text-dark-200 text-sm; }
+  .markdown-content img { @apply rounded-xl max-w-full mb-3; }
+  .markdown-content hr { @apply border-dark-700 my-6; }
+
+  /* Light mode markdown */
+  html.light .markdown-content h1 { @apply text-gray-900; }
+  html.light .markdown-content h2 { @apply text-gray-900; }
+  html.light .markdown-content h3 { @apply text-gray-900; }
+  html.light .markdown-content p { @apply text-gray-700; }
+  html.light .markdown-content li { @apply text-gray-700; }
+  html.light .markdown-content code { @apply bg-gray-100 text-brand-600; }
+  html.light .markdown-content pre { @apply bg-gray-900; }
+  html.light .markdown-content pre code { @apply text-gray-100; }
+  html.light .markdown-content blockquote { @apply text-gray-600 border-brand-400; }
+  html.light .markdown-content a { @apply text-brand-600 hover:text-brand-500; }
+  html.light .markdown-content strong { @apply text-gray-900; }
+  html.light .markdown-content th { @apply bg-gray-100 text-gray-900; }
+  html.light .markdown-content td { @apply border-gray-200 text-gray-700; }
 }
 
 @layer utilities {
