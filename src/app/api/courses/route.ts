@@ -39,7 +39,7 @@ export async function GET(req: Request) {
         author: { select: { name: true, image: true } },
         modules: {
           include: {
-            lessons: { select: { id: true, title: true, duration: true, isFree: true, order: true } },
+            lessons: { select: { id: true, title: true, isFree: true, order: true } },
           },
           orderBy: { order: 'asc' },
         },
