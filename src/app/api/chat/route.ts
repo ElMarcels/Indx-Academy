@@ -14,8 +14,22 @@ export async function GET(req: NextRequest) {
 
   try {
     const groupId = req.nextUrl.searchParams.get('groupId');
+    const contactId = req.nextUrl.searchParams.get('contactId');
 
-    const where = groupId ? { groupId } : { groupId: null };
+    let where: any = {};
+
+    if (groupId) {
+      where = { groupId };
+    } else if (contactId) {
+      where = {
+        OR: [
+          { senderId: user.id, receiverId: contactId },
+          { senderId: contactId, receiverId: user.id },
+        ],
+      };
+    } else {
+      where = { groupId: null, receiverId: null };
+    }
 
     const messages = await prisma.message.findMany({
       where,
@@ -48,7 +62,7 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
 
   try {
-    const { content, groupId } = await req.json();
+    const { content, groupId, receiverId } = await req.json();
 
     if (!content?.trim()) {
       return NextResponse.json({ error: 'Mensaje vacío' }, { status: 400 });
@@ -59,6 +73,7 @@ export async function POST(req: NextRequest) {
         content: content.trim(),
         senderId: user.id,
         groupId: groupId || null,
+        receiverId: receiverId || null,
       },
     });
 

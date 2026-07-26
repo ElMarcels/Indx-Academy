@@ -69,6 +69,8 @@ model User {
   receivedMessages Message[]          @relation("ReceivedMessages")
   groupMemberships GroupMembership[]
   createdCourses   Course[]           @relation("CourseAuthor")
+  contacts         Contact[]          @relation("ContactOwner")
+  contactOf        Contact[]          @relation("ContactTarget")
 }
 
 // ─── Courses ────────────────────────────────────────────
@@ -298,23 +300,40 @@ model Message {
   group    Group?        @relation(fields: [groupId], references: [id], onDelete: Cascade)
 }
 
-// ─── Student Groups ─────────────────────────────────────
+// ─── Contacts ───────────────────────────────────────────
+
+model Contact {
+  id        String   @id @default(cuid())
+  userId    String
+  contactId String
+  status    String   @default("PENDING") // PENDING | ACCEPTED | BLOCKED
+  createdAt DateTime @default(now())
+
+  owner   User @relation("ContactOwner", fields: [userId], references: [id], onDelete: Cascade)
+  contact User @relation("ContactTarget", fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, contactId])
+}
+
+// ─── Student Groups (private, invite-only) ──────────────
 
 model Group {
   id          String   @id @default(cuid())
   name        String
   description String?
+  createdById String
   createdAt   DateTime @default(now())
 
-  members GroupMembership[]
-  messages Message[]
+  createdBy User            @relation(fields: [createdById], references: [id])
+  members   GroupMembership[]
+  messages  Message[]
 }
 
 model GroupMembership {
   id       String   @id @default(cuid())
   userId   String
   groupId  String
-  role     String   @default("MEMBER") // MEMBER | MODERATOR
+  role     String   @default("MEMBER") // ADMIN | MEMBER
   joinedAt DateTime @default(now())
 
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)

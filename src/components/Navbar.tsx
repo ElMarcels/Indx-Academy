@@ -5,15 +5,11 @@ import { useSession, signOut } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  FiMenu, FiX, FiUser, FiLogOut, FiShield, FiStar, FiSun, FiMoon, FiGlobe,
+  FiMenu, FiX, FiUser, FiLogOut, FiShield, FiStar, FiUsers, FiMessageSquare, FiUserPlus,
 } from 'react-icons/fi';
-import { useTheme } from './ThemeProvider';
-import { useI18n } from './I18nProvider';
 
 export function Navbar() {
   const { data: session, status } = useSession();
-  const { theme, toggleTheme } = useTheme();
-  const { locale, t, toggleLocale } = useI18n();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -46,26 +42,30 @@ export function Navbar() {
 
           <div className="hidden md:flex items-center gap-5">
             <Link href="/cursos" className="text-dark-300 hover:text-white transition-colors text-sm font-medium relative group">
-              {t('nav_courses')}
+              Cursos
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-brand-500 to-accent-500 group-hover:w-full transition-all duration-300" />
             </Link>
 
             {session && (
               <>
                 <Link href="/dashboard" className="text-dark-300 hover:text-white transition-colors text-sm font-medium relative group">
-                  {t('nav_dashboard')}
+                  Mi Aprendizaje
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-brand-500 to-accent-500 group-hover:w-full transition-all duration-300" />
                 </Link>
                 <Link href="/estudiantes" className="text-dark-300 hover:text-white transition-colors text-sm font-medium relative group">
                   Estudiantes
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-brand-500 to-accent-500 group-hover:w-full transition-all duration-300" />
                 </Link>
+                <Link href="/contactos" className="text-dark-300 hover:text-white transition-colors text-sm font-medium relative group">
+                  Contactos
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-brand-500 to-accent-500 group-hover:w-full transition-all duration-300" />
+                </Link>
                 <Link href="/grupos" className="text-dark-300 hover:text-white transition-colors text-sm font-medium relative group">
-                  {t('nav_groups')}
+                  Grupos
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-brand-500 to-accent-500 group-hover:w-full transition-all duration-300" />
                 </Link>
                 <Link href="/chat" className="text-dark-300 hover:text-white transition-colors text-sm font-medium relative group">
-                  {t('nav_chat')}
+                  Chat
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-brand-500 to-accent-500 group-hover:w-full transition-all duration-300" />
                 </Link>
               </>
@@ -77,17 +77,6 @@ export function Navbar() {
                 Admin
               </Link>
             )}
-
-            <div className="flex items-center gap-1">
-              <motion.button onClick={toggleLocale} className="text-dark-300 hover:text-white transition-colors p-2 rounded-lg hover:bg-dark-800/50" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} title={locale === 'es' ? 'English' : 'Español'}>
-                <FiGlobe size={16} />
-                <span className="text-[10px] ml-0.5">{locale.toUpperCase()}</span>
-              </motion.button>
-
-              <motion.button onClick={toggleTheme} className="text-dark-300 hover:text-white transition-colors p-2 rounded-lg hover:bg-dark-800/50" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} title={theme === 'dark' ? t('nav_theme_light') : t('nav_theme_dark')}>
-                {theme === 'dark' ? <FiSun size={16} /> : <FiMoon size={16} />}
-              </motion.button>
-            </div>
 
             {status === 'loading' ? (
               <div className="w-20 h-8 bg-dark-800 rounded-xl animate-pulse" />
@@ -101,14 +90,14 @@ export function Navbar() {
                     {session.user?.name || session.user?.email}
                   </span>
                 </Link>
-                <motion.button onClick={() => signOut()} className="text-dark-500 hover:text-red-400 transition-colors" title={t('nav_logout')} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                <motion.button onClick={() => signOut()} className="text-dark-500 hover:text-red-400 transition-colors" title="Cerrar Sesión" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                   <FiLogOut size={16} />
                 </motion.button>
               </div>
             ) : (
               <div className="flex items-center gap-3">
-                <Link href="/login" className="btn-secondary text-sm py-2 px-4">{t('nav_login')}</Link>
-                <Link href="/register" className="btn-primary text-sm py-2 px-4">{t('nav_register')}</Link>
+                <Link href="/login" className="btn-secondary text-sm py-2 px-4">Iniciar Sesión</Link>
+                <Link href="/register" className="btn-primary text-sm py-2 px-4">Registrarse</Link>
               </div>
             )}
           </div>
@@ -123,29 +112,24 @@ export function Navbar() {
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="md:hidden overflow-hidden border-t border-dark-800/50">
               <div className="py-4 space-y-3">
                 <Link href="/cursos" className="block text-dark-300 hover:text-white py-2 text-sm" onClick={() => setMobileOpen(false)}>
-                  {t('nav_courses')}
+                  Cursos
                 </Link>
-                <button onClick={toggleTheme} className="flex items-center gap-2 text-dark-300 hover:text-white py-2 text-sm">
-                  {theme === 'dark' ? <FiSun size={14} /> : <FiMoon size={14} />}
-                  {theme === 'dark' ? t('nav_theme_light') : t('nav_theme_dark')}
-                </button>
-                <button onClick={toggleLocale} className="flex items-center gap-2 text-dark-300 hover:text-white py-2 text-sm">
-                  <FiGlobe size={14} />
-                  {locale === 'es' ? 'English' : 'Español'}
-                </button>
                 {session ? (
                   <>
                     <Link href="/dashboard" className="block text-dark-300 hover:text-white py-2 text-sm" onClick={() => setMobileOpen(false)}>
-                      {t('nav_dashboard')}
+                      Mi Aprendizaje
                     </Link>
                     <Link href="/estudiantes" className="block text-dark-300 hover:text-white py-2 text-sm" onClick={() => setMobileOpen(false)}>
                       Estudiantes
                     </Link>
-                    <Link href="/grupos" className="block text-dark-300 hover:text-white py-2 text-sm" onClick={() => setMobileOpen(false)}>
-                      {t('nav_groups')}
+                    <Link href="/contactos" className="block text-dark-300 hover:text-white py-2 text-sm" onClick={() => setMobileOpen(false)}>
+                      Contactos
                     </Link>
-                    <Link href="/chat" className="block text-dark-300 hover:text-white py-2 text-sm" onClick={() => setMobileOpen(false)}>
-                      {t('nav_chat')}
+                    <Link href="/grupos" className="block text-dark-300 hover:text-white py-2 text-sm" onClick={() => setMobileOpen(false)}>
+                      Grupos
+                    </Link>
+                    <Link href="/chat" className="flex items-center gap-2 text-dark-300 hover:text-white py-2 text-sm" onClick={() => setMobileOpen(false)}>
+                      <FiMessageSquare size={14} /> Chat
                     </Link>
                     {(session.user as any)?.role === 'ADMIN' && (
                       <Link href="/admin" className="block text-accent-400 hover:text-accent-300 py-2 text-sm" onClick={() => setMobileOpen(false)}>
@@ -153,16 +137,16 @@ export function Navbar() {
                       </Link>
                     )}
                     <button onClick={() => { signOut(); setMobileOpen(false); }} className="text-red-400 hover:text-red-300 py-2 text-sm text-left">
-                      {t('nav_logout')}
+                      Cerrar Sesión
                     </button>
                   </>
                 ) : (
                   <>
                     <Link href="/login" className="block text-dark-300 hover:text-white py-2 text-sm" onClick={() => setMobileOpen(false)}>
-                      {t('nav_login')}
+                      Iniciar Sesión
                     </Link>
                     <Link href="/register" className="btn-primary text-sm text-center mt-2 block" onClick={() => setMobileOpen(false)}>
-                      {t('nav_register')}
+                      Registrarse
                     </Link>
                   </>
                 )}

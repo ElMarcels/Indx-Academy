@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { FiGithub, FiTwitter, FiMessageCircle, FiHeart } from 'react-icons/fi';
+import { FiGithub, FiTwitter, FiMessageCircle } from 'react-icons/fi';
 
 export function Footer() {
   return (
@@ -71,8 +71,11 @@ export function Footer() {
         </div>
 
         <div className="mt-10 pt-8 border-t border-dark-800/50 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-dark-500 text-sm flex items-center gap-1">
-            &copy; {new Date().getFullYear()} Indx Academy. Hecho con <FiHeart size={12} className="text-red-400" /> para la comunidad.
+          <p className="text-dark-500 text-sm">
+            &copy; {new Date().getFullYear()} Indx Academy. Un Proyecto de{' '}
+            <a href="https://elmarcels.jixen.xyz" target="_blank" rel="noopener noreferrer" className="text-brand-400 hover:text-brand-300 transition-colors font-medium">
+              ElMarcels
+            </a>
           </p>
           <div className="flex items-center gap-4">
             <a href="#" className="text-dark-500 hover:text-white text-sm transition-colors">Términos</a>

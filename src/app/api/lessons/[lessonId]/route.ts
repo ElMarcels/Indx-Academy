@@ -1,10 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 
 export async function GET(
-  req: Request,
+  _req: NextRequest,
   { params }: { params: { lessonId: string } }
 ) {
   try {
@@ -25,34 +23,27 @@ export async function GET(
       return NextResponse.json({ error: 'Lección no encontrada' }, { status: 404 });
     }
 
-    // Get all lessons for navigation
     const allLessons = await prisma.lesson.findMany({
-      where: {
-        module: { courseId: lesson.module.course.id },
-      },
+      where: { module: { courseId: lesson.module.course.id } },
       include: {
-        module: { select: { order: true } },
+        module: {
+          select: { order: true, course: { select: { slug: true } } },
+        },
       },
-      orderBy: [{ module: { order: 'asc' } }, { order: 'asc' }],
+      orderBy: { module: { order: 'asc' } },
     });
 
-    // Check completion
-    let completed = false;
-    const session = await getServerSession(authOptions);
-    if (session) {
-      const progress = await prisma.lessonProgress.findUnique({
-        where: {
-          userId_lessonId: {
-            userId: (session.user as any).id,
-            lessonId: params.lessonId,
-          },
-        },
-      });
-      completed = progress?.completed || false;
-    }
+    const sortedLessons = allLessons.sort((a, b) => {
+      if (a.module.order !== b.module.order) return a.module.order - b.module.order;
+      return a.order - b.order;
+    });
 
-    return NextResponse.json({ lesson, allLessons, completed });
-  } catch (error) {
-    return NextResponse.json({ error: 'Error al cargar lección' }, { status: 500 });
+    return NextResponse.json({
+      lesson,
+      allLessons: sortedLessons,
+      completed: false,
+    });
+  } catch {
+    return NextResponse.json({ error: 'Error del servidor' }, { status: 500 });
   }
 }

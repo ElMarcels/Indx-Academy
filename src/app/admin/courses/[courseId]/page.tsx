@@ -7,17 +7,19 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import {
   FiArrowLeft, FiPlus, FiTrash2, FiFileText, FiEdit2, FiSave, FiPaperclip, FiX,
-  FiAward, FiCode,
+  FiAward, FiCode, FiUpload,
 } from 'react-icons/fi';
 import { MarkdownEditor } from '@/components/MarkdownEditor';
 import { AdminQuizEditor } from '@/components/AdminQuizEditor';
 import { AdminChallengeEditor } from '@/components/AdminChallengeEditor';
+import { AdminLessonFiles } from '@/components/AdminLessonFiles';
 
 interface LessonFile {
+  id: string;
   name: string;
   url: string;
-  size?: number;
-  type?: string;
+  size: number | null;
+  type: string | null;
 }
 
 interface Module {
@@ -84,6 +86,9 @@ export default function EditCoursePage() {
     thumbnail: '',
   });
 
+  const [lessonFiles, setLessonFiles] = useState<Record<string, LessonFile[]>>({});
+  const [showFilesFor, setShowFilesFor] = useState<string | null>(null);
+
   useEffect(() => {
     if (status === 'authenticated' && (session?.user as any)?.role !== 'ADMIN') {
       router.push('/dashboard');
@@ -105,6 +110,20 @@ export default function EditCoursePage() {
             duration: data.duration || '',
             thumbnail: data.thumbnail || '',
           });
+
+          // Load files for all lessons
+          const allLessonIds = data.modules.flatMap((m: Module) => m.lessons.map((l: Lesson) => l.id));
+          for (const lessonId of allLessonIds) {
+            try {
+              const fileRes = await fetch(`/api/lessons/${lessonId}`);
+              if (fileRes.ok) {
+                const fileData = await fileRes.json();
+                if (fileData.lesson?.files) {
+                  setLessonFiles((prev) => ({ ...prev, [lessonId]: fileData.lesson.files }));
+                }
+              }
+            } catch { /* silent */ }
+          }
         }
       } catch {
         toast.error('Error al cargar curso');
@@ -452,23 +471,41 @@ export default function EditCoursePage() {
 
               <div className="divide-y divide-dark-800/50">
                 {mod.lessons.map((lesson) => (
-                  <div key={lesson.id} className="px-4 py-3 flex items-center gap-3">
-                    <FiFileText size={14} className="text-dark-500 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <span className="text-sm text-dark-200 block truncate">{lesson.title}</span>
-                      {lesson.content && (
-                        <span className="text-xs text-dark-600 block truncate">Contenido: {lesson.content.substring(0, 60)}...</span>
-                      )}
+                  <div key={lesson.id}>
+                    <div className="px-4 py-3 flex items-center gap-3">
+                      <FiFileText size={14} className="text-dark-500 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm text-dark-200 block truncate">{lesson.title}</span>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {lesson.isFree && <span className="badge-green text-[10px]">Gratis</span>}
+                        <button
+                          onClick={() => setShowFilesFor(showFilesFor === lesson.id ? null : lesson.id)}
+                          className="text-dark-500 hover:text-emerald-400 transition-colors"
+                          title="Archivos"
+                        >
+                          <FiUpload size={14} />
+                          {(lessonFiles[lesson.id]?.length || 0) > 0 && (
+                            <span className="ml-0.5 text-[10px]">{lessonFiles[lesson.id].length}</span>
+                          )}
+                        </button>
+                        <button
+                          onClick={() => deleteLesson(lesson.id, mod.id)}
+                          className="text-dark-500 hover:text-red-400 transition-colors"
+                        >
+                          <FiTrash2 size={14} />
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      {lesson.isFree && <span className="badge-green text-[10px]">Gratis</span>}
-                      <button
-                        onClick={() => deleteLesson(lesson.id, mod.id)}
-                        className="text-dark-500 hover:text-red-400 transition-colors"
-                      >
-                        <FiTrash2 size={14} />
-                      </button>
-                    </div>
+                    {showFilesFor === lesson.id && (
+                      <div className="px-4 pb-3">
+                        <AdminLessonFiles
+                          lessonId={lesson.id}
+                          files={lessonFiles[lesson.id] || []}
+                          onFilesChange={(newFiles) => setLessonFiles((prev) => ({ ...prev, [lesson.id]: newFiles }))}
+                        />
+                      </div>
+                    )}
                   </div>
                 ))}
                 {mod.lessons.length === 0 && (

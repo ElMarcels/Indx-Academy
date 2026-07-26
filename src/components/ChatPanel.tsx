@@ -16,9 +16,10 @@ interface Message {
 
 interface ChatProps {
   groupId?: string;
+  contactId?: string;
 }
 
-export function ChatPanel({ groupId }: ChatProps) {
+export function ChatPanel({ groupId, contactId }: ChatProps) {
   const { data: session } = useSession();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -30,7 +31,7 @@ export function ChatPanel({ groupId }: ChatProps) {
     loadMessages();
     const interval = setInterval(loadMessages, 5000);
     return () => clearInterval(interval);
-  }, [groupId]);
+  }, [groupId, contactId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -38,7 +39,9 @@ export function ChatPanel({ groupId }: ChatProps) {
 
   async function loadMessages() {
     try {
-      const url = groupId ? `/api/chat?groupId=${groupId}` : '/api/chat';
+      let url = '/api/chat';
+      if (groupId) url = `/api/chat?groupId=${groupId}`;
+      else if (contactId) url = `/api/chat?contactId=${contactId}`;
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
@@ -53,10 +56,14 @@ export function ChatPanel({ groupId }: ChatProps) {
     if (!input.trim() || sending) return;
     setSending(true);
     try {
+      const body: any = { content: input };
+      if (groupId) body.groupId = groupId;
+      if (contactId) body.receiverId = contactId;
+
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: input, groupId }),
+        body: JSON.stringify(body),
       });
       if (res.ok) {
         setInput('');
@@ -88,7 +95,7 @@ export function ChatPanel({ groupId }: ChatProps) {
       <div className="p-4 border-b border-dark-800/50 flex items-center gap-2">
         <FiMessageSquare size={16} className="text-brand-400" />
         <h3 className="font-semibold text-white text-sm">
-          {groupId ? 'Chat del Grupo' : 'Chat General'}
+          {groupId ? 'Chat del Grupo' : contactId ? 'Chat Privado' : 'Chat General'}
         </h3>
         <span className="badge-blue text-[10px] ml-auto">{messages.length} mensajes</span>
       </div>
