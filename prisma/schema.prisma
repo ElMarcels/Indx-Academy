@@ -322,10 +322,10 @@ model Group {
   id          String   @id @default(cuid())
   name        String
   description String?
-  createdById String
+  createdById String?
   createdAt   DateTime @default(now())
 
-  createdBy User            @relation(fields: [createdById], references: [id])
+  createdBy User?           @relation(fields: [createdById], references: [id])
   members   GroupMembership[]
   messages  Message[]
 }
