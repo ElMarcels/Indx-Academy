@@ -50,14 +50,23 @@ export function ProfilePhoto({ userId, currentImage, isMe, name = '', size = 'md
     const interval = setInterval(() => setProgress((p) => Math.min(p + 10, 90)), 150);
 
     try {
-      const res = await fetch('/api/upload/profile', {
+      const formData = new FormData();
+      formData.append('userId', userId);
+
+      const res = await fetch(preview);
+      const blob = await res.blob();
+      const ext = blob.type.split('/')[1] || 'png';
+      const file = new File([blob], `profile.${ext}`, { type: blob.type });
+      formData.append('image', file);
+
+      const uploadRes = await fetch('/api/upload/profile', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, image: preview }),
+        body: formData,
       });
-      if (res.ok) {
+      if (uploadRes.ok) {
         toast.success('Foto actualizada');
         setPreview(null);
+        window.location.reload();
       } else {
         toast.error('Error al subir imagen');
       }

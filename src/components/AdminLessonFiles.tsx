@@ -31,18 +31,14 @@ export function AdminLessonFiles({ lessonId, files, onFilesChange }: AdminLesson
     try {
       for (let i = 0; i < fileList.length; i++) {
         const file = fileList[i];
-        const base64 = await fileToBase64(file);
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('lessonId', lessonId);
 
         const res = await fetch('/api/upload', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: file.name,
-            url: base64,
-            size: file.size,
-            type: file.type,
-            lessonId,
-          }),
+          body: formData,
         });
 
         if (res.ok) {
