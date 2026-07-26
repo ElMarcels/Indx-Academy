@@ -9,7 +9,7 @@ import { FiUserPlus, FiUser, FiCheck, FiX, FiMessageSquare, FiSearch } from 'rea
 
 interface Contact {
   id: string;
-  userId?: string;
+  contactId?: string;
   name: string | null;
   email: string;
   image: string | null;
@@ -222,7 +222,7 @@ export default function ContactosPage() {
             ) : (
               <div className="grid sm:grid-cols-2 gap-3">
                 {contacts.map((c) => (
-                  <motion.div key={c.id} className="card p-4 flex items-center justify-between" whileHover={{ scale: 1.01 }}>
+                  <motion.div key={c.contactId || c.id} className="card p-4 flex items-center justify-between" whileHover={{ scale: 1.01 }}>
                     <Link href={`/estudiantes/${c.id}`} className="flex items-center gap-3 group flex-1 min-w-0">
                       <div className="w-10 h-10 bg-gradient-to-br from-brand-500/20 to-accent-500/20 rounded-full flex items-center justify-center flex-shrink-0">
                         <FiUser size={16} className="text-brand-400" />
@@ -236,7 +236,7 @@ export default function ContactosPage() {
                       <Link href={`/chat?contactId=${c.id}`} className="p-2 text-dark-500 hover:text-brand-400 transition-colors" title="Enviar mensaje">
                         <FiMessageSquare size={14} />
                       </Link>
-                      <button onClick={() => removeContact(c.id)} className="p-2 text-dark-500 hover:text-red-400 transition-colors" title="Eliminar contacto">
+                      <button onClick={() => removeContact(c.contactId || c.id)} className="p-2 text-dark-500 hover:text-red-400 transition-colors" title="Eliminar contacto">
                         <FiX size={14} />
                       </button>
                     </div>

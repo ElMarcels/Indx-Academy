@@ -30,7 +30,7 @@ export async function GET() {
 
     const contactList = contacts.map((c) => {
       const other = c.userId === user.id ? c.contact : c.owner;
-      return { id: c.id, ...other, since: c.createdAt };
+      return { contactId: c.id, id: other.id, name: other.name, email: other.email, image: other.image, since: c.createdAt };
     });
 
     return NextResponse.json({ contacts: contactList });
