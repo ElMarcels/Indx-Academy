@@ -32,9 +32,9 @@ interface Lesson {
     id: string;
     title: string;
     course: { id: string; title: string; slug: string };
+    quizzes: { id: string; title: string }[];
   };
   files: LessonFile[];
-  quiz?: { id: string } | null;
 }
 
 interface AllLesson {
@@ -194,10 +194,12 @@ export default function LessonPage() {
             </div>
           )}
 
-          {/* Quiz */}
-          {lesson.quiz && (
-            <div className="mb-6">
-              <QuizComponent quizId={lesson.quiz.id} />
+          {/* Module Quiz */}
+          {lesson.module.quizzes && lesson.module.quizzes.length > 0 && (
+            <div className="mb-6 space-y-6">
+              {lesson.module.quizzes.map((quiz) => (
+                <QuizComponent key={quiz.id} quizId={quiz.id} />
+              ))}
             </div>
           )}
 

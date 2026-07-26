@@ -14,10 +14,10 @@ export async function GET(
         module: {
           include: {
             course: { select: { id: true, title: true, slug: true } },
+            quizzes: { select: { id: true, title: true } },
           },
         },
         files: true,
-        quiz: { select: { id: true } },
       },
     });
 
