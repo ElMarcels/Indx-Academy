@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
-  FiBell, FiCheck, FiCheckCheck, FiAward, FiMessageSquare, FiMessageCircle,
+  FiBell, FiCheck, FiCheckSquare, FiAward, FiMessageSquare, FiMessageCircle,
   FiInfo, FiX, FiLoader,
 } from 'react-icons/fi';
 import { formatDistanceToNow } from 'date-fns';
@@ -133,7 +133,7 @@ export function Notifications() {
                   className="text-[11px] text-brand-400 hover:text-brand-300 transition-colors flex items-center gap-1"
                   whileTap={{ scale: 0.95 }}
                 >
-                  {markingAll ? <FiLoader size={10} className="animate-spin" /> : <FiCheckCheck size={10} />}
+                  {markingAll ? <FiLoader size={10} className="animate-spin" /> : <FiCheckSquare size={10} />}
                   Marcar todo leído
                 </motion.button>
               )}

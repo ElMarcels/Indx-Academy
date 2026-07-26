@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
-  FiMessageSquare, FiPlus, FiSearch, FiArrowLeft, FiPin, FiCheckCircle,
+  FiMessageSquare, FiPlus, FiSearch, FiArrowLeft, FiMapPin, FiCheckCircle,
   FiUser, FiClock, FiSend, FiX, FiFilter,
 } from 'react-icons/fi';
 import { formatDistanceToNow } from 'date-fns';
@@ -183,7 +183,7 @@ export function Forum({ courseId }: ForumProps) {
           <div className="flex items-start justify-between gap-3 mb-3">
             <h2 className="text-xl font-bold text-white">{selectedPost.title}</h2>
             <div className="flex items-center gap-2 shrink-0">
-              {selectedPost.pinned && <span className="badge-yellow text-[10px] flex items-center gap-1"><FiPin size={10} /> Fijado</span>}
+              {selectedPost.pinned && <span className="badge-yellow text-[10px] flex items-center gap-1"><FiMapPin size={10} /> Fijado</span>}
               {selectedPost.resolved && <span className="badge-green text-[10px] flex items-center gap-1"><FiCheckCircle size={10} /> Resuelto</span>}
             </div>
           </div>
@@ -199,7 +199,7 @@ export function Forum({ courseId }: ForumProps) {
           {isAdmin && (
             <div className="flex items-center gap-2 mt-4 pt-4 border-t border-dark-800/50">
               <motion.button onClick={() => togglePin(selectedPost)} className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1" whileTap={{ scale: 0.95 }}>
-                <FiPin size={12} /> {selectedPost.pinned ? 'Desfijar' : 'Fijar'}
+                <FiMapPin size={12} /> {selectedPost.pinned ? 'Desfijar' : 'Fijar'}
               </motion.button>
               <motion.button onClick={() => toggleResolved(selectedPost)} className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1" whileTap={{ scale: 0.95 }}>
                 <FiCheckCircle size={12} /> {selectedPost.resolved ? 'Abrir' : 'Resolver'}
@@ -351,7 +351,7 @@ export function Forum({ courseId }: ForumProps) {
           {pinned.length > 0 && (
             <div>
               <h3 className="text-xs font-semibold text-dark-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                <FiPin size={12} /> Fijados
+                <FiMapPin size={12} /> Fijados
               </h3>
               <div className="space-y-2">
                 {pinned.map((post) => (
@@ -392,7 +392,7 @@ function PostCard({ post, onClick }: { post: ForumPost; onClick: () => void }) {
           {post.title}
         </h4>
         <div className="flex items-center gap-1.5 shrink-0">
-          {post.pinned && <span className="badge-yellow text-[9px] py-0 px-1.5"><FiPin size={8} /> Fijado</span>}
+          {post.pinned && <span className="badge-yellow text-[9px] py-0 px-1.5"><FiMapPin size={8} /> Fijado</span>}
           {post.resolved && <span className="badge-green text-[9px] py-0 px-1.5"><FiCheckCircle size={8} /> Resuelto</span>}
         </div>
       </div>
