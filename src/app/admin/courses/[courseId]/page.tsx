@@ -347,8 +347,7 @@ export default function EditCoursePage() {
             >
               <FiPlus size={14} /> Nuevo Módulo
             </button>
-          </div>
-        )}
+        </div>
 
         {activeTab === 'challenges' && (
           <div className="flex items-center justify-between mb-4">
@@ -362,7 +361,7 @@ export default function EditCoursePage() {
           </div>
         )}
 
-        {showModuleForm && (
+        {activeTab === 'modules' && showModuleForm && (
           <div className="card p-4 mb-4 flex gap-3">
             <input
               type="text"
@@ -377,6 +376,7 @@ export default function EditCoursePage() {
           </div>
         )}
 
+        {activeTab === 'modules' && (
         <div className="space-y-4">
           {course.modules.map((mod) => (
             <div key={mod.id} className="card overflow-hidden">
