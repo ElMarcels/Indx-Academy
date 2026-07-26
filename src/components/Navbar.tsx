@@ -4,12 +4,16 @@ import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiMenu, FiX, FiUser, FiBook, FiLogOut, FiShield, FiStar, FiSun, FiMoon } from 'react-icons/fi';
+import {
+  FiMenu, FiX, FiUser, FiLogOut, FiShield, FiStar, FiSun, FiMoon, FiGlobe,
+} from 'react-icons/fi';
 import { useTheme } from './ThemeProvider';
+import { useI18n } from './I18nProvider';
 
 export function Navbar() {
   const { data: session, status } = useSession();
   const { theme, toggleTheme } = useTheme();
+  const { locale, t, toggleLocale } = useI18n();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -21,14 +25,14 @@ export function Navbar() {
 
   return (
     <nav className={`sticky top-0 z-50 transition-all duration-500 ${
-      scrolled 
-        ? 'bg-dark-950/90 backdrop-blur-2xl border-b border-dark-800/50 shadow-xl shadow-dark-950/50 scrolled' 
+      scrolled
+        ? 'bg-dark-950/90 backdrop-blur-2xl border-b border-dark-800/50 shadow-xl shadow-dark-950/50 scrolled'
         : 'bg-transparent backdrop-blur-sm'
     }`}>
       <div className="section">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2.5 group">
-            <motion.div 
+            <motion.div
               className="w-9 h-9 bg-gradient-to-br from-brand-500 to-accent-500 rounded-xl flex items-center justify-center shadow-lg shadow-brand-500/25"
               whileHover={{ scale: 1.1, rotate: 5 }}
               whileTap={{ scale: 0.95 }}
@@ -40,142 +44,125 @@ export function Navbar() {
             </span>
           </Link>
 
-          <div className="hidden md:flex items-center gap-6">
-            <Link
-              href="/cursos"
-              className="text-dark-300 hover:text-white transition-colors text-sm font-medium relative group"
-            >
-              Cursos
+          <div className="hidden md:flex items-center gap-5">
+            <Link href="/cursos" className="text-dark-300 hover:text-white transition-colors text-sm font-medium relative group">
+              {t('nav_courses')}
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-brand-500 to-accent-500 group-hover:w-full transition-all duration-300" />
             </Link>
 
-            <motion.button
-              onClick={toggleTheme}
-              className="text-dark-300 hover:text-white transition-colors p-2 rounded-lg hover:bg-dark-800/50"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              title={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
-            >
-              {theme === 'dark' ? <FiSun size={16} /> : <FiMoon size={16} />}
-            </motion.button>
+            {session && (
+              <>
+                <Link href="/dashboard" className="text-dark-300 hover:text-white transition-colors text-sm font-medium relative group">
+                  {t('nav_dashboard')}
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-brand-500 to-accent-500 group-hover:w-full transition-all duration-300" />
+                </Link>
+                <Link href="/estudiantes" className="text-dark-300 hover:text-white transition-colors text-sm font-medium relative group">
+                  Estudiantes
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-brand-500 to-accent-500 group-hover:w-full transition-all duration-300" />
+                </Link>
+                <Link href="/grupos" className="text-dark-300 hover:text-white transition-colors text-sm font-medium relative group">
+                  {t('nav_groups')}
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-brand-500 to-accent-500 group-hover:w-full transition-all duration-300" />
+                </Link>
+                <Link href="/chat" className="text-dark-300 hover:text-white transition-colors text-sm font-medium relative group">
+                  {t('nav_chat')}
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-brand-500 to-accent-500 group-hover:w-full transition-all duration-300" />
+                </Link>
+              </>
+            )}
+
+            {(session?.user as any)?.role === 'ADMIN' && (
+              <Link href="/admin" className="flex items-center gap-1.5 text-accent-400 hover:text-accent-300 transition-colors text-sm font-medium">
+                <FiShield size={14} />
+                Admin
+              </Link>
+            )}
+
+            <div className="flex items-center gap-1">
+              <motion.button onClick={toggleLocale} className="text-dark-300 hover:text-white transition-colors p-2 rounded-lg hover:bg-dark-800/50" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} title={locale === 'es' ? 'English' : 'Español'}>
+                <FiGlobe size={16} />
+                <span className="text-[10px] ml-0.5">{locale.toUpperCase()}</span>
+              </motion.button>
+
+              <motion.button onClick={toggleTheme} className="text-dark-300 hover:text-white transition-colors p-2 rounded-lg hover:bg-dark-800/50" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} title={theme === 'dark' ? t('nav_theme_light') : t('nav_theme_dark')}>
+                {theme === 'dark' ? <FiSun size={16} /> : <FiMoon size={16} />}
+              </motion.button>
+            </div>
 
             {status === 'loading' ? (
               <div className="w-20 h-8 bg-dark-800 rounded-xl animate-pulse" />
             ) : session ? (
-              <div className="flex items-center gap-4">
-                <Link
-                  href="/dashboard"
-                  className="text-dark-300 hover:text-white transition-colors text-sm font-medium relative group"
-                >
-                  Mi Aprendizaje
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-brand-500 to-accent-500 group-hover:w-full transition-all duration-300" />
-                </Link>
-                {(session.user as any)?.role === 'ADMIN' && (
-                  <Link
-                    href="/admin"
-                    className="flex items-center gap-1.5 text-accent-400 hover:text-accent-300 transition-colors text-sm font-medium"
-                  >
-                    <FiShield size={14} />
-                    Admin
-                  </Link>
-                )}
-                <div className="flex items-center gap-2 pl-4 border-l border-dark-700/50">
-                  <motion.div 
-                    className="w-8 h-8 bg-gradient-to-br from-brand-500/20 to-accent-500/20 rounded-full flex items-center justify-center border border-brand-500/20"
-                    whileHover={{ scale: 1.1 }}
-                  >
+              <div className="flex items-center gap-3 pl-3 border-l border-dark-700/50">
+                <Link href={`/estudiantes/${(session.user as any)?.id || ''}`} className="flex items-center gap-2 group">
+                  <motion.div className="w-8 h-8 bg-gradient-to-br from-brand-500/20 to-accent-500/20 rounded-full flex items-center justify-center border border-brand-500/20" whileHover={{ scale: 1.1 }}>
                     <FiUser size={14} className="text-brand-400" />
                   </motion.div>
-                  <span className="text-sm text-dark-200 max-w-[120px] truncate">
+                  <span className="text-sm text-dark-200 max-w-[100px] truncate group-hover:text-white transition-colors">
                     {session.user?.name || session.user?.email}
                   </span>
-                  <motion.button
-                    onClick={() => signOut()}
-                    className="text-dark-500 hover:text-red-400 transition-colors"
-                    title="Cerrar sesión"
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                  >
-                    <FiLogOut size={16} />
-                  </motion.button>
-                </div>
+                </Link>
+                <motion.button onClick={() => signOut()} className="text-dark-500 hover:text-red-400 transition-colors" title={t('nav_logout')} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                  <FiLogOut size={16} />
+                </motion.button>
               </div>
             ) : (
               <div className="flex items-center gap-3">
-                <Link href="/login" className="btn-secondary text-sm py-2 px-4">
-                  Iniciar Sesión
-                </Link>
-                <Link href="/register" className="btn-primary text-sm py-2 px-4">
-                  Registrarse
-                </Link>
+                <Link href="/login" className="btn-secondary text-sm py-2 px-4">{t('nav_login')}</Link>
+                <Link href="/register" className="btn-primary text-sm py-2 px-4">{t('nav_register')}</Link>
               </div>
             )}
           </div>
 
-          <motion.button
-            className="md:hidden text-dark-300 hover:text-white"
-            onClick={() => setMobileOpen(!mobileOpen)}
-            whileTap={{ scale: 0.9 }}
-          >
+          <motion.button className="md:hidden text-dark-300 hover:text-white" onClick={() => setMobileOpen(!mobileOpen)} whileTap={{ scale: 0.9 }}>
             {mobileOpen ? <FiX size={24} /> : <FiMenu size={24} />}
           </motion.button>
         </div>
 
         <AnimatePresence>
           {mobileOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="md:hidden overflow-hidden border-t border-dark-800/50"
-            >
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="md:hidden overflow-hidden border-t border-dark-800/50">
               <div className="py-4 space-y-3">
-                <Link
-                  href="/cursos"
-                  className="block text-dark-300 hover:text-white py-2 text-sm"
-                  onClick={() => setMobileOpen(false)}
-                >
-                  Cursos
+                <Link href="/cursos" className="block text-dark-300 hover:text-white py-2 text-sm" onClick={() => setMobileOpen(false)}>
+                  {t('nav_courses')}
                 </Link>
-                <button
-                  onClick={() => { toggleTheme(); }}
-                  className="flex items-center gap-2 text-dark-300 hover:text-white py-2 text-sm"
-                >
+                <button onClick={toggleTheme} className="flex items-center gap-2 text-dark-300 hover:text-white py-2 text-sm">
                   {theme === 'dark' ? <FiSun size={14} /> : <FiMoon size={14} />}
-                  {theme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}
+                  {theme === 'dark' ? t('nav_theme_light') : t('nav_theme_dark')}
+                </button>
+                <button onClick={toggleLocale} className="flex items-center gap-2 text-dark-300 hover:text-white py-2 text-sm">
+                  <FiGlobe size={14} />
+                  {locale === 'es' ? 'English' : 'Español'}
                 </button>
                 {session ? (
                   <>
-                    <Link
-                      href="/dashboard"
-                      className="block text-dark-300 hover:text-white py-2 text-sm"
-                      onClick={() => setMobileOpen(false)}
-                    >
-                      Mi Aprendizaje
+                    <Link href="/dashboard" className="block text-dark-300 hover:text-white py-2 text-sm" onClick={() => setMobileOpen(false)}>
+                      {t('nav_dashboard')}
+                    </Link>
+                    <Link href="/estudiantes" className="block text-dark-300 hover:text-white py-2 text-sm" onClick={() => setMobileOpen(false)}>
+                      Estudiantes
+                    </Link>
+                    <Link href="/grupos" className="block text-dark-300 hover:text-white py-2 text-sm" onClick={() => setMobileOpen(false)}>
+                      {t('nav_groups')}
+                    </Link>
+                    <Link href="/chat" className="block text-dark-300 hover:text-white py-2 text-sm" onClick={() => setMobileOpen(false)}>
+                      {t('nav_chat')}
                     </Link>
                     {(session.user as any)?.role === 'ADMIN' && (
-                      <Link
-                        href="/admin"
-                        className="block text-accent-400 hover:text-accent-300 py-2 text-sm"
-                        onClick={() => setMobileOpen(false)}
-                      >
+                      <Link href="/admin" className="block text-accent-400 hover:text-accent-300 py-2 text-sm" onClick={() => setMobileOpen(false)}>
                         Panel Admin
                       </Link>
                     )}
-                    <button
-                      onClick={() => { signOut(); setMobileOpen(false); }}
-                      className="text-red-400 hover:text-red-300 py-2 text-sm text-left"
-                    >
-                      Cerrar Sesión
+                    <button onClick={() => { signOut(); setMobileOpen(false); }} className="text-red-400 hover:text-red-300 py-2 text-sm text-left">
+                      {t('nav_logout')}
                     </button>
                   </>
                 ) : (
                   <>
                     <Link href="/login" className="block text-dark-300 hover:text-white py-2 text-sm" onClick={() => setMobileOpen(false)}>
-                      Iniciar Sesión
+                      {t('nav_login')}
                     </Link>
                     <Link href="/register" className="btn-primary text-sm text-center mt-2 block" onClick={() => setMobileOpen(false)}>
-                      Registrarse
+                      {t('nav_register')}
                     </Link>
                   </>
                 )}

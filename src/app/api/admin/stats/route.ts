@@ -11,11 +11,13 @@ export async function GET() {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    const [totalUsers, totalCourses, totalEnrollments, totalLessons] = await Promise.all([
+    const [totalUsers, totalCourses, totalEnrollments, totalLessons, totalMessages, totalAchievements] = await Promise.all([
       prisma.user.count(),
       prisma.course.count(),
       prisma.enrollment.count(),
       prisma.lesson.count(),
+      prisma.message.count(),
+      prisma.userAchievement.count(),
     ]);
 
     const recentUsers = await prisma.user.findMany({
@@ -39,15 +41,39 @@ export async function GET() {
       take: 10,
     });
 
+    const courses = await prisma.course.findMany({
+      select: {
+        title: true,
+        _count: { select: { enrollments: true } },
+      },
+    });
+
+    const courseStats = await Promise.all(
+      courses.map(async (c) => {
+        const course = await prisma.course.findFirst({ where: { title: c.title }, select: { id: true } });
+        const lessonCount = course
+          ? await prisma.lesson.count({ where: { module: { courseId: course.id } } })
+          : 0;
+        return {
+          title: c.title,
+          enrollmentCount: c._count.enrollments,
+          lessonCount,
+        };
+      })
+    );
+
     return NextResponse.json({
       stats: {
         totalUsers,
         totalCourses,
         totalEnrollments,
         totalLessons,
+        totalMessages,
+        totalAchievements,
       },
       recentUsers,
       recentEnrollments,
+      courseStats,
     });
   } catch (error) {
     return NextResponse.json({ error: 'Error al cargar stats' }, { status: 500 });

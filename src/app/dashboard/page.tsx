@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { FiBook, FiClock, FiArrowRight, FiStar } from 'react-icons/fi';
+import { FiBook, FiClock, FiArrowRight, FiStar, FiAward, FiUsers } from 'react-icons/fi';
 import { ProgressBar } from '@/components/ProgressBar';
+import { AchievementList } from '@/components/AchievementList';
 
 interface EnrolledCourse {
   id: string;
@@ -29,6 +30,7 @@ export default function DashboardPage() {
   const [enrollments, setEnrollments] = useState<EnrolledCourse[]>([]);
   const [progressMap, setProgressMap] = useState<Record<string, { completed: number; total: number }>>({});
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'courses' | 'achievements'>('courses');
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -45,9 +47,7 @@ export default function DashboardPage() {
           setEnrollments(data.enrollments);
           setProgressMap(data.progressMap);
         }
-      } catch {
-        // silent
-      } finally {
+      } catch { /* silent */ } finally {
         setLoading(false);
       }
     }
@@ -72,80 +72,115 @@ export default function DashboardPage() {
   return (
     <div className="py-12">
       <div className="section">
-        <motion.div 
-          className="mb-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
+        <motion.div className="mb-8" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <h1 className="text-3xl font-bold text-white mb-2">Mi Aprendizaje</h1>
           <p className="text-dark-400">
             Bienvenido, {session?.user?.name || session?.user?.email}. Continúa donde lo dejaste.
           </p>
         </motion.div>
 
-        {enrollments.length > 0 ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {enrollments.map((enrollment, i) => {
-              const totalLessons = enrollment.course.modules.reduce(
-                (acc, m) => acc + m.lessons.length, 0
-              );
-              const progress = progressMap[enrollment.course.id] || { completed: 0, total: totalLessons };
+        {/* Quick Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          {[
+            { icon: FiBook, label: 'Cursos', value: enrollments.length, color: 'from-brand-500 to-brand-600' },
+            { icon: FiClock, label: 'Lecciones', value: Object.values(progressMap).reduce((a, b) => a + b.completed, 0), color: 'from-emerald-500 to-emerald-600' },
+            { icon: FiAward, label: 'Logros', value: '-', color: 'from-yellow-500 to-yellow-600' },
+            { icon: FiUsers, label: 'Grupos', value: '-', color: 'from-accent-500 to-accent-600' },
+          ].map((s, i) => (
+            <motion.div key={s.label} className="card p-4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+              <div className="flex items-center gap-2 mb-2">
+                <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${s.color} flex items-center justify-center text-white`}>
+                  <s.icon size={14} />
+                </div>
+              </div>
+              <div className="text-xl font-bold text-white">{s.value}</div>
+              <div className="text-xs text-dark-400">{s.label}</div>
+            </motion.div>
+          ))}
+        </div>
 
-              return (
-                <motion.div
-                  key={enrollment.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                >
-                  <Link href={`/cursos/${enrollment.course.slug}`}>
-                    <div className="card-hover p-5 h-full flex flex-col">
-                      <div className="flex items-start gap-4 mb-4">
-                        <div className="w-14 h-14 bg-gradient-to-br from-brand-500/20 to-accent-500/20 rounded-xl flex items-center justify-center flex-shrink-0 border border-brand-500/10">
-                          <FiBook className="text-brand-400" size={22} />
-                        </div>
-                        <div className="min-w-0">
-                          <h3 className="text-white font-semibold truncate">{enrollment.course.title}</h3>
-                          <span className="text-xs text-dark-500 capitalize">{enrollment.course.level.toLowerCase()}</span>
-                        </div>
-                      </div>
-
-                      <div className="mt-auto">
-                        <ProgressBar
-                          current={progress.completed}
-                          total={progress.total}
-                          size="sm"
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between mt-4">
-                        <span className="text-xs text-dark-500 flex items-center gap-1">
-                          <FiClock size={12} />
-                          Inscrito {new Date(enrollment.enrolledAt).toLocaleDateString('es')}
-                        </span>
-                        <FiArrowRight size={16} className="text-dark-500 group-hover:text-brand-400" />
-                      </div>
-                    </div>
-                  </Link>
-                </motion.div>
-              );
-            })}
-          </div>
-        ) : (
-          <motion.div 
-            className="text-center py-20"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
+        {/* Tabs */}
+        <div className="flex items-center gap-2 mb-6">
+          <button
+            onClick={() => setActiveTab('courses')}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+              activeTab === 'courses' ? 'bg-brand-600 text-white' : 'text-dark-400 hover:text-white bg-dark-800/50'
+            }`}
           >
-            <div className="w-16 h-16 bg-dark-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <FiBook className="text-dark-500" size={28} />
+            Cursos Inscritos
+          </button>
+          <button
+            onClick={() => setActiveTab('achievements')}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+              activeTab === 'achievements' ? 'bg-brand-600 text-white' : 'text-dark-400 hover:text-white bg-dark-800/50'
+            }`}
+          >
+            Logros
+          </button>
+          <Link href="/grupos" className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors text-dark-400 hover:text-white bg-dark-800/50`}>
+            Grupos
+          </Link>
+          <Link href="/chat" className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors text-dark-400 hover:text-white bg-dark-800/50`}>
+            Chat
+          </Link>
+        </div>
+
+        {activeTab === 'courses' && (
+          enrollments.length > 0 ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {enrollments.map((enrollment, i) => {
+                const totalLessons = enrollment.course.modules.reduce((acc, m) => acc + m.lessons.length, 0);
+                const progress = progressMap[enrollment.course.id] || { completed: 0, total: totalLessons };
+
+                return (
+                  <motion.div key={enrollment.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
+                    <Link href={`/cursos/${enrollment.course.slug}`}>
+                      <div className="card-hover p-5 h-full flex flex-col">
+                        <div className="flex items-start gap-4 mb-4">
+                          <div className="w-14 h-14 bg-gradient-to-br from-brand-500/20 to-accent-500/20 rounded-xl flex items-center justify-center flex-shrink-0 border border-brand-500/10">
+                            <FiBook className="text-brand-400" size={22} />
+                          </div>
+                          <div className="min-w-0">
+                            <h3 className="text-white font-semibold truncate">{enrollment.course.title}</h3>
+                            <span className="text-xs text-dark-500 capitalize">{enrollment.course.level.toLowerCase()}</span>
+                          </div>
+                        </div>
+                        <div className="mt-auto">
+                          <ProgressBar current={progress.completed} total={progress.total} size="sm" />
+                        </div>
+                        <div className="flex items-center justify-between mt-4">
+                          <span className="text-xs text-dark-500 flex items-center gap-1">
+                            <FiClock size={12} />
+                            Inscrito {new Date(enrollment.enrolledAt).toLocaleDateString('es')}
+                          </span>
+                          <FiArrowRight size={16} className="text-dark-500 group-hover:text-brand-400" />
+                        </div>
+                      </div>
+                    </Link>
+                  </motion.div>
+                );
+              })}
             </div>
-            <h2 className="text-xl font-semibold text-white mb-2">Aún no estás inscrito en ningún curso</h2>
-            <p className="text-dark-400 mb-6">Explora nuestro catálogo y comienza a aprender hoy. Todo es gratis.</p>
-            <Link href="/cursos" className="btn-primary inline-flex items-center gap-2">
-              <FiStar size={16} /> Ver Cursos <FiArrowRight size={16} />
-            </Link>
-          </motion.div>
+          ) : (
+            <motion.div className="text-center py-20" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+              <div className="w-16 h-16 bg-dark-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <FiBook className="text-dark-500" size={28} />
+              </div>
+              <h2 className="text-xl font-semibold text-white mb-2">Aún no estás inscrito en ningún curso</h2>
+              <p className="text-dark-400 mb-6">Explora nuestro catálogo y comienza a aprender hoy. Todo es gratis.</p>
+              <Link href="/cursos" className="btn-primary inline-flex items-center gap-2">
+                <FiStar size={16} /> Ver Cursos <FiArrowRight size={16} />
+              </Link>
+            </motion.div>
+          )
+        )}
+
+        {activeTab === 'achievements' && (
+          <div>
+            {(session?.user as any)?.id && (
+              <AchievementList userId={(session?.user as any)?.id} />
+            )}
+          </div>
         )}
       </div>
     </div>

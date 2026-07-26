@@ -52,6 +52,7 @@ model User {
   emailVerified DateTime?
   password      String?
   image         String?
+  bio           String?
   role          String    @default("STUDENT") // STUDENT | ADMIN
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -63,7 +64,11 @@ model User {
   quizAttempts     QuizAttempt[]
   challengeSubmissions ChallengeSubmission[]
   comments         Comment[]
-  createdCourses   Course[]        @relation("CourseAuthor")
+  achievements     UserAchievement[]
+  sentMessages     Message[]          @relation("SentMessages")
+  receivedMessages Message[]          @relation("ReceivedMessages")
+  groupMemberships GroupMembership[]
+  createdCourses   Course[]           @relation("CourseAuthor")
 }
 
 // ─── Courses ────────────────────────────────────────────
@@ -234,6 +239,34 @@ model ChallengeSubmission {
   @@unique([userId, challengeId])
 }
 
+// ─── Achievements ───────────────────────────────────────
+
+model Achievement {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  title       String
+  description String
+  icon        String   // Emoji or icon name
+  category    String   @default("MILESTONE") // MILESTONE | COURSE | QUIZ | CHALLENGE | SPECIAL
+  criteria    String   // JSON: { type: "enrollments" | "lessons" | "quizzes" | "challenges", count: N }
+  points      Int      @default(10)
+  createdAt   DateTime @default(now())
+
+  users UserAchievement[]
+}
+
+model UserAchievement {
+  id            String   @id @default(cuid())
+  userId        String
+  achievementId String
+  earnedAt      DateTime @default(now())
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+}
+
 // ─── Comments ───────────────────────────────────────────
 
 model Comment {
@@ -248,4 +281,44 @@ model Comment {
   user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   course Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
   lesson Lesson? @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+}
+
+// ─── Chat / Messages ────────────────────────────────────
+
+model Message {
+  id         String   @id @default(cuid())
+  content    String
+  senderId   String
+  receiverId String?
+  groupId    String?
+  createdAt  DateTime @default(now())
+
+  sender   User          @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User?         @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  group    Group?        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+}
+
+// ─── Student Groups ─────────────────────────────────────
+
+model Group {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+
+  members GroupMembership[]
+  messages Message[]
+}
+
+model GroupMembership {
+  id       String   @id @default(cuid())
+  userId   String
+  groupId  String
+  role     String   @default("MEMBER") // MEMBER | MODERATOR
+  joinedAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, groupId])
 }

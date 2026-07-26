@@ -21,7 +21,6 @@ export interface CourseWithModules {
     lessons: {
       id: string;
       title: string;
-      duration: number | null;
       isFree: boolean;
       order: number;
     }[];
@@ -47,6 +46,7 @@ export interface LessonWithModule {
       title: string;
       slug: string;
     };
+    quizzes: { id: string; title: string }[];
   };
   files?: {
     id: string;
@@ -110,6 +110,52 @@ export interface ChallengeWithSubmissions extends Challenge {
   }[];
 }
 
+// ─── Achievement Types ──────────────────────────────────
+
+export interface Achievement {
+  id: string;
+  name: string;
+  title: string;
+  description: string;
+  icon: string;
+  category: string;
+  points: number;
+}
+
+// ─── Chat Types ─────────────────────────────────────────
+
+export interface ChatMessage {
+  id: string;
+  content: string;
+  senderId: string;
+  senderName: string;
+  createdAt: string;
+}
+
+// ─── Group Types ────────────────────────────────────────
+
+export interface StudyGroup {
+  id: string;
+  name: string;
+  description: string | null;
+  memberCount: number;
+}
+
+// ─── Student Types ──────────────────────────────────────
+
+export interface StudentProfile {
+  id: string;
+  name: string | null;
+  email: string;
+  bio: string | null;
+  createdAt: Date;
+  _count: {
+    enrollments: number;
+    lessonProgress: number;
+    achievements: number;
+  };
+}
+
 // ─── Admin Stats ────────────────────────────────────────
 
 export interface AdminStats {
@@ -117,6 +163,8 @@ export interface AdminStats {
   totalCourses: number;
   totalLessons: number;
   totalEnrollments: number;
+  totalMessages: number;
+  totalAchievements: number;
   recentEnrollments: {
     id: string;
     enrolledAt: Date;
