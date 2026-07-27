@@ -8,9 +8,12 @@ export async function POST(
   { params }: { params: { activityId: string } }
 ) {
   const session = await getServerSession(authOptions)
-  if (!session) {
+  if (!session?.user?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  const user = await prisma.user.findUnique({ where: { email: session.user.email } })
+  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
   const { content, fileUrl } = await req.json()
 
@@ -18,7 +21,7 @@ export async function POST(
     where: {
       activityId_userId: {
         activityId: params.activityId,
-        userId: session.user.id,
+        userId: user.id,
       },
     },
     update: {
@@ -30,7 +33,7 @@ export async function POST(
       content,
       fileUrl: fileUrl ?? undefined,
       activityId: params.activityId,
-      userId: session.user.id,
+      userId: user.id,
       status: 'SUBMITTED',
     },
   })
