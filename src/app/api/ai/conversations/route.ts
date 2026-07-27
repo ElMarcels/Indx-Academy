@@ -18,11 +18,21 @@ export async function GET(req: NextRequest) {
       take: 20,
       include: {
         _count: { select: { messages: true } },
-        course: { select: { id: true, title: true, slug: true } },
       },
     });
 
-    return NextResponse.json({ conversations });
+    const courseIds = [...new Set(conversations.map(c => c.courseId).filter(Boolean))] as string[];
+    const courses = courseIds.length
+      ? await prisma.course.findMany({ where: { id: { in: courseIds } }, select: { id: true, title: true, slug: true } })
+      : [];
+    const courseMap = new Map(courses.map(c => [c.id, c]));
+
+    const enriched = conversations.map(c => ({
+      ...c,
+      course: c.courseId ? courseMap.get(c.courseId) ?? null : null,
+    }));
+
+    return NextResponse.json({ conversations: enriched });
   } catch (error) {
     console.error('List conversations error:', error);
     return NextResponse.json({ error: 'Error al cargar conversaciones' }, { status: 500 });
@@ -46,12 +56,17 @@ export async function POST(req: NextRequest) {
         courseId: courseId || null,
         title: title || 'Nueva conversación',
       },
-      include: {
-        course: { select: { id: true, title: true, slug: true } },
-      },
     });
 
-    return NextResponse.json({ conversation }, { status: 201 });
+    let course = null;
+    if (conversation.courseId) {
+      course = await prisma.course.findUnique({
+        where: { id: conversation.courseId },
+        select: { id: true, title: true, slug: true },
+      });
+    }
+
+    return NextResponse.json({ conversation: { ...conversation, course } }, { status: 201 });
   } catch (error) {
     console.error('Create conversation error:', error);
     return NextResponse.json({ error: 'Error al crear conversación' }, { status: 500 });

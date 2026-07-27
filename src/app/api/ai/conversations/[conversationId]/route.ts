@@ -22,7 +22,6 @@ export async function GET(
         messages: {
           orderBy: { createdAt: 'asc' },
         },
-        course: { select: { id: true, title: true, slug: true } },
       },
     });
 
@@ -30,7 +29,15 @@ export async function GET(
       return NextResponse.json({ error: 'Conversación no encontrada' }, { status: 404 });
     }
 
-    return NextResponse.json({ conversation });
+    let course = null;
+    if (conversation.courseId) {
+      course = await prisma.course.findUnique({
+        where: { id: conversation.courseId },
+        select: { id: true, title: true, slug: true },
+      });
+    }
+
+    return NextResponse.json({ conversation: { ...conversation, course } });
   } catch (error) {
     console.error('Get conversation error:', error);
     return NextResponse.json({ error: 'Error al cargar conversación' }, { status: 500 });
