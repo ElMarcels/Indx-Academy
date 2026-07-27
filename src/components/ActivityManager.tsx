@@ -402,6 +402,7 @@ function TypeConfigFields({
           </div>
         </div>
       );
+    }
 
     default:
       return null;
