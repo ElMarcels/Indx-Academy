@@ -51,8 +51,8 @@ model User {
   email         String    @unique
   emailVerified DateTime?
   password      String?
-  image     String?
-  bio       String?
+  image     String?   @map("avatarUrl")
+  bio       String?   @map("profileBio")
   role          String    @default("STUDENT") // STUDENT | ADMIN
   interests     String?   // JSON array of interest tags
   pushSubscription String? // JSON push subscription for web notifications
