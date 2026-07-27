@@ -8,10 +8,12 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
   FiSend, FiMessageSquare, FiSearch, FiPaperclip, FiBookmark, FiTrash2,
-  FiX, FiImage, FiFile, FiMoreVertical, FiDownload,
+  FiX, FiImage, FiFile, FiMoreVertical, FiDownload, FiFlag,
 } from 'react-icons/fi';
 import { ProfilePopup } from '@/components/ProfilePopup';
 import { DeleteConfirmModal } from '@/components/DeleteConfirmModal';
+import { Reactions } from './Reactions';
+import { ReportModal } from './ReportModal';
 
 interface Message {
   id: string;
@@ -75,6 +77,9 @@ export function ChatPanel({ groupId, contactId, contactName }: ChatProps) {
 
   // File upload
   const [uploadingFile, setUploadingFile] = useState(false);
+
+  // Report
+  const [reportTarget, setReportTarget] = useState<{ targetType: string; targetId: string } | null>(null);
 
   const loadMessages = useCallback(async () => {
     try {
@@ -488,6 +493,17 @@ export function ChatPanel({ groupId, contactId, contactName }: ChatProps) {
                   </div>
 
                   <span className="text-[10px] text-dark-600 mt-1">{formatTime(msg.createdAt)}</span>
+                  {!isMe && (
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <Reactions targetType="MESSAGE" targetId={msg.id} compact />
+                      <button
+                        onClick={() => setReportTarget({ targetType: 'MESSAGE', targetId: msg.id })}
+                        className="text-dark-700 hover:text-red-400 transition-colors"
+                      >
+                        <FiFlag size={8} />
+                      </button>
+                    </div>
+                  )}
                 </motion.div>
               );
             })
@@ -609,6 +625,13 @@ export function ChatPanel({ groupId, contactId, contactName }: ChatProps) {
         onConfirm={() => deleteTarget && deleteMessage(deleteTarget)}
         onCancel={() => { setDeleteTarget(null); setContextMenu(null); }}
         loading={deleting}
+      />
+
+      <ReportModal
+        open={!!reportTarget}
+        targetType={reportTarget?.targetType || ''}
+        targetId={reportTarget?.targetId || ''}
+        onClose={() => setReportTarget(null)}
       />
     </>
   );

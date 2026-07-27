@@ -6,10 +6,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
   FiMessageSquare, FiPlus, FiSearch, FiArrowLeft, FiMapPin, FiCheckCircle,
-  FiUser, FiClock, FiSend, FiX, FiFilter,
+  FiUser, FiClock, FiSend, FiX, FiFilter, FiFlag,
 } from 'react-icons/fi';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Reactions } from './Reactions';
+import { ReportModal } from './ReportModal';
 
 interface ForumPost {
   id: string;
@@ -49,6 +51,7 @@ export function Forum({ courseId }: ForumProps) {
   const [submitting, setSubmitting] = useState(false);
   const [replyContent, setReplyContent] = useState('');
   const [sendingReply, setSendingReply] = useState(false);
+  const [reportTarget, setReportTarget] = useState<{ targetType: string; targetId: string } | null>(null);
 
   const isAdmin = (session?.user as any)?.role === 'ADMIN';
   const userId = (session?.user as any)?.id;
@@ -208,6 +211,18 @@ export function Forum({ courseId }: ForumProps) {
           </div>
           <p className="text-dark-200 whitespace-pre-wrap leading-relaxed">{selectedPost.content}</p>
 
+          <div className="flex items-center justify-between mt-4 pt-4 border-t border-dark-800/50">
+            <Reactions targetType="FORUM_POST" targetId={selectedPost.id} />
+            {userId !== selectedPost.userId && (
+              <button
+                onClick={() => setReportTarget({ targetType: 'FORUM_POST', targetId: selectedPost.id })}
+                className="text-dark-500 hover:text-red-400 transition-colors flex items-center gap-1 text-xs"
+              >
+                <FiFlag size={12} /> Reportar
+              </button>
+            )}
+          </div>
+
           {isAdmin && (
             <div className="flex items-center gap-2 mt-4 pt-4 border-t border-dark-800/50">
               <motion.button onClick={() => togglePin(selectedPost)} className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1" whileTap={{ scale: 0.95 }}>
@@ -246,6 +261,17 @@ export function Forum({ courseId }: ForumProps) {
                       </span>
                     </div>
                     <p className="text-dark-200 text-sm whitespace-pre-wrap">{reply.content}</p>
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-dark-800/30">
+                      <Reactions targetType="FORUM_REPLY" targetId={reply.id} compact />
+                      {userId !== reply.userId && (
+                        <button
+                          onClick={() => setReportTarget({ targetType: 'FORUM_REPLY', targetId: reply.id })}
+                          className="text-dark-600 hover:text-red-400 transition-colors"
+                        >
+                          <FiFlag size={10} />
+                        </button>
+                      )}
+                    </div>
                   </motion.div>
                 ))}
               </AnimatePresence>
@@ -388,6 +414,13 @@ export function Forum({ courseId }: ForumProps) {
           )}
         </div>
       )}
+
+      <ReportModal
+        open={!!reportTarget}
+        targetType={reportTarget?.targetType || ''}
+        targetId={reportTarget?.targetId || ''}
+        onClose={() => setReportTarget(null)}
+      />
     </div>
   );
 }

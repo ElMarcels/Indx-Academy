@@ -11,6 +11,8 @@ import {
   FiBarChart2, FiArrowLeft, FiArrowRight, FiFileText, FiStar,
 } from 'react-icons/fi';
 import { ProgressBar } from '@/components/ProgressBar';
+import { CourseProgress } from '@/components/CourseProgress';
+import { SurveyForm } from '@/components/SurveyForm';
 
 interface Course {
   id: string;
@@ -148,6 +150,7 @@ export default function CursoPage() {
   const allLessons = course.modules.flatMap((m) => m.lessons);
   const completedCount = progress.filter((p) => p.completed).length;
   const totalLessons = allLessons.length;
+  const completedLessons = progress.filter((p) => p.completed).map((p) => p.lessonId);
 
   return (
     <div className="py-8">
@@ -348,9 +351,30 @@ export default function CursoPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Course Progress */}
+              {enrolled && (
+                <div className="mt-4">
+                  <CourseProgress
+                    modules={course.modules.map((m) => ({
+                      ...m,
+                      quizzes: [],
+                    }))}
+                    completedLessons={completedLessons}
+                    courseId={course.id}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
+
+        {/* Survey Form (shown after enrollment) */}
+        {enrolled && (
+          <div className="mt-8">
+            <SurveyForm courseId={course.id} />
+          </div>
+        )}
       </div>
     </div>
   );

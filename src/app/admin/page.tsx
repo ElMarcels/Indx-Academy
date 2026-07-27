@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
-  FiUsers, FiBook, FiBarChart2, FiArrowRight, FiClock, FiAward, FiMessageSquare, FiTrendingUp,
+  FiUsers, FiBook, FiBarChart2, FiArrowRight, FiClock, FiAward, FiMessageSquare, FiTrendingUp, FiFlag,
 } from 'react-icons/fi';
 
 interface Stats {
@@ -212,11 +212,12 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div className="grid sm:grid-cols-3 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             { href: '/admin/courses', title: 'Gestionar Cursos', desc: 'Crear, editar, eliminar' },
             { href: '/admin/courses/new', title: 'Nuevo Curso', desc: 'Añadir curso al catálogo' },
             { href: '/admin/users', title: 'Usuarios', desc: 'Ver todos los usuarios' },
+            { href: '/admin/reports', title: 'Moderación', desc: 'Reportes pendientes', icon: FiFlag },
           ].map((link, i) => (
             <motion.div
               key={link.href}
@@ -226,7 +227,10 @@ export default function AdminPage() {
             >
               <Link href={link.href} className="card p-5 hover:border-dark-600 transition-colors flex items-center justify-between group">
                 <div>
-                  <h3 className="text-white font-medium">{link.title}</h3>
+                  <h3 className="text-white font-medium flex items-center gap-2">
+                    {link.icon && <link.icon size={14} className="text-red-400" />}
+                    {link.title}
+                  </h3>
                   <p className="text-dark-500 text-sm">{link.desc}</p>
                 </div>
                 <FiArrowRight size={18} className="text-dark-500 group-hover:text-brand-400 transition-colors" />

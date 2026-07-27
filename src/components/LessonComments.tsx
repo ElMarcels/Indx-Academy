@@ -6,7 +6,9 @@ import toast from 'react-hot-toast';
 import { useSession } from 'next-auth/react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { FiMessageSquare, FiSend, FiArrowLeft, FiLoader } from 'react-icons/fi';
+import { FiMessageSquare, FiSend, FiArrowLeft, FiLoader, FiFlag } from 'react-icons/fi';
+import { Reactions } from './Reactions';
+import { ReportModal } from './ReportModal';
 
 interface Comment {
   id: string;
@@ -32,6 +34,7 @@ export function LessonComments({ lessonId }: LessonCommentsProps) {
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState('');
+  const [reportTarget, setReportTarget] = useState<{ targetType: string; targetId: string } | null>(null);
 
   useEffect(() => {
     fetchComments();
@@ -222,6 +225,17 @@ export function LessonComments({ lessonId }: LessonCommentsProps) {
                         <span className="text-xs text-dark-500">{timeAgo(comment.createdAt)}</span>
                       </div>
                       <p className="text-sm text-dark-300 mt-1 whitespace-pre-wrap">{comment.content}</p>
+                      <div className="flex items-center justify-between mt-2">
+                        <Reactions targetType="COMMENT" targetId={comment.id} compact />
+                        {session && (session?.user as any)?.id !== comment.user.id && (
+                          <button
+                            onClick={() => setReportTarget({ targetType: 'COMMENT', targetId: comment.id })}
+                            className="text-dark-600 hover:text-red-400 transition-colors"
+                          >
+                            <FiFlag size={10} />
+                          </button>
+                        )}
+                      </div>
                       <button
                         onClick={() => {
                           setReplyingTo(replyingTo === comment.id ? null : comment.id);
@@ -253,6 +267,17 @@ export function LessonComments({ lessonId }: LessonCommentsProps) {
                               <span className="text-xs text-dark-500">{timeAgo(reply.createdAt)}</span>
                             </div>
                             <p className="text-sm text-dark-300 mt-1 whitespace-pre-wrap">{reply.content}</p>
+                            <div className="flex items-center justify-between mt-1">
+                              <Reactions targetType="COMMENT" targetId={reply.id} compact />
+                              {session && (session?.user as any)?.id !== reply.user.id && (
+                                <button
+                                  onClick={() => setReportTarget({ targetType: 'COMMENT', targetId: reply.id })}
+                                  className="text-dark-600 hover:text-red-400 transition-colors"
+                                >
+                                  <FiFlag size={10} />
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -312,6 +337,14 @@ export function LessonComments({ lessonId }: LessonCommentsProps) {
           </AnimatePresence>
         </div>
       )}
+    </div>
+
+      <ReportModal
+        open={!!reportTarget}
+        targetType={reportTarget?.targetType || ''}
+        targetId={reportTarget?.targetId || ''}
+        onClose={() => setReportTarget(null)}
+      />
     </div>
   );
 }

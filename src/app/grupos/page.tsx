@@ -13,6 +13,7 @@ import {
 import { ChatPanel } from '@/components/ChatPanel';
 import { ProfilePopup } from '@/components/ProfilePopup';
 import { DeleteConfirmModal } from '@/components/DeleteConfirmModal';
+import { CollaborativeEditor } from '@/components/CollaborativeEditor';
 
 interface GroupMember {
   user: { id: string; name: string | null; email: string; image: string | null };
@@ -553,6 +554,11 @@ export default function GroupsPage() {
                           {/* Group chat */}
                           <div className="mb-4">
                             <ChatPanel groupId={group.id} />
+                          </div>
+
+                          {/* Collaborative Editor */}
+                          <div className="mb-4">
+                            <CollaborativeEditor groupId={group.id} />
                           </div>
 
                           {/* Members */}

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { FiCheckCircle, FiXCircle, FiRotateCcw, FiAward } from 'react-icons/fi';
 import { useSession } from 'next-auth/react';
+import { TimedQuiz } from './TimedQuiz';
 
 interface QuizQuestion {
   id: string;
@@ -19,6 +20,8 @@ interface Quiz {
   id: string;
   title: string;
   description: string | null;
+  isTimed: boolean;
+  timeLimit: number | null;
   questions: QuizQuestion[];
 }
 
@@ -35,6 +38,7 @@ export function QuizComponent({ quizId }: QuizProps) {
   const [result, setResult] = useState<{ score: number; total: number; passed: boolean } | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [timerExpired, setTimerExpired] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -53,6 +57,12 @@ export function QuizComponent({ quizId }: QuizProps) {
     }
     load();
   }, [quizId]);
+
+  useEffect(() => {
+    if (timerExpired && !showResult) {
+      submitQuiz();
+    }
+  }, [timerExpired]);
 
   function selectAnswer(qIndex: number, oIndex: number) {
     if (showResult) return;
@@ -97,6 +107,7 @@ export function QuizComponent({ quizId }: QuizProps) {
     setSelectedAnswers(new Array(quiz?.questions.length || 0).fill(null));
     setShowResult(false);
     setResult(null);
+    setTimerExpired(false);
   }
 
   if (loading) {
@@ -114,7 +125,17 @@ export function QuizComponent({ quizId }: QuizProps) {
   const question = quiz.questions[currentQ];
 
   return (
-    <div className="card p-6">
+    <div className="space-y-4">
+      {/* Timed quiz banner */}
+      {quiz.isTimed && quiz.timeLimit && !showResult && (
+        <TimedQuiz
+          quizId={quiz.id}
+          timeLimit={quiz.timeLimit}
+          onComplete={() => setTimerExpired(true)}
+        />
+      )}
+
+      <div className="card p-6">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-bold text-white">{quiz.title}</h3>
         <span className="badge-blue">
@@ -226,6 +247,7 @@ export function QuizComponent({ quizId }: QuizProps) {
             Siguiente
           </button>
         )}
+      </div>
       </div>
     </div>
   );

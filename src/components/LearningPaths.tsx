@@ -13,6 +13,8 @@ import {
   FiArrowRight,
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
+import { PathQuiz } from '@/components/PathQuiz';
+import { FiTarget } from 'react-icons/fi';
 
 interface Course {
   id: string;
@@ -29,6 +31,7 @@ interface LearningPath {
   description: string;
   level: string;
   thumbnail: string | null;
+  quizQuestions?: string | null;
   courses: { order: number; course: Course }[];
 }
 
@@ -55,6 +58,7 @@ export function LearningPaths() {
     description: '',
     level: 'BEGINNER',
   });
+  const [showQuiz, setShowQuiz] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPaths();
@@ -264,6 +268,30 @@ export function LearningPaths() {
                             </Link>
                           </div>
                         ))
+                      )}
+
+                      {/* Path Quiz Section */}
+                      {path.quizQuestions && (
+                        <div className="mt-4 pt-4 border-t border-dark-800/50">
+                          {showQuiz === path.id ? (
+                            <PathQuiz
+                              pathId={path.id}
+                              questions={JSON.parse(path.quizQuestions)}
+                              onComplete={() => setShowQuiz(null)}
+                            />
+                          ) : (
+                            <button
+                              onClick={() => setShowQuiz(path.id)}
+                              className="w-full p-3 rounded-xl bg-gradient-to-r from-brand-500/10 to-accent-500/10 border border-brand-500/20 flex items-center gap-3 hover:from-brand-500/20 hover:to-accent-500/20 transition-all"
+                            >
+                              <FiTarget size={18} className="text-brand-400" />
+                              <div className="text-left">
+                                <p className="text-sm font-medium text-white">¿No sabes por dónde empezar?</p>
+                                <p className="text-xs text-dark-400">Haz el cuestionario y te recomendamos un nivel</p>
+                              </div>
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
                   </motion.div>

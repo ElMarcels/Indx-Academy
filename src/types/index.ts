@@ -305,3 +305,87 @@ export interface CourseTemplate {
   fileSize: number | null;
   language: string | null;
 }
+
+// ─── Reaction Types ─────────────────────────────────────
+export interface Reaction {
+  id: string;
+  type: string;
+  userId: string;
+  targetType: string;
+  targetId: string;
+}
+
+// ─── Report Types ───────────────────────────────────────
+export interface Report {
+  id: string;
+  reporterId: string;
+  targetType: string;
+  targetId: string;
+  reason: string;
+  description: string | null;
+  status: string;
+  createdAt: string;
+  reporter?: { name: string | null; email: string };
+}
+
+// ─── Survey Types ───────────────────────────────────────
+export interface SurveyQuestion {
+  question: string;
+  type: 'stars' | 'text' | 'choice';
+  options?: string[];
+}
+
+export interface Survey {
+  id: string;
+  courseId: string;
+  title: string;
+  description: string | null;
+  questions: SurveyQuestion[];
+  isActive: boolean;
+}
+
+// ─── Flashcard Types ────────────────────────────────────
+export interface FlashcardReview {
+  id: string;
+  glossaryId: string;
+  quality: number;
+  interval: number;
+  easeFactor: number;
+  nextReview: string;
+  reviewCount: number;
+  term?: GlossaryTerm;
+}
+
+// ─── Collaborative Project Types ────────────────────────
+export interface CollaborativeProject {
+  id: string;
+  name: string;
+  description: string | null;
+  language: string;
+  code: string;
+  groupId: string | null;
+  createdById: string;
+  createdAt: string;
+  members?: ProjectMember[];
+  createdBy?: { name: string | null; image: string | null };
+}
+
+export interface ProjectMember {
+  id: string;
+  userId: string;
+  role: string;
+  user: { name: string | null; image: string | null };
+}
+
+// ─── Path Quiz Types ────────────────────────────────────
+export interface PathQuizQuestion {
+  question: string;
+  options: string[];
+  correctIndex: number;
+}
+
+// ─── Onboarding Types ───────────────────────────────────
+export interface OnboardingState {
+  completedSteps: string[];
+  completedAt: string | null;
+}
