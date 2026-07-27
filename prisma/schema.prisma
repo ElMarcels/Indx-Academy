@@ -90,6 +90,7 @@ model User {
   surveyResponses  SurveyResponse[]
   pathQuizResults  PathQuizResult[]
   projectMemberships ProjectMember[]
+  createdProjects    CollaborativeProject[]
   onboarding       UserOnboarding?
 }
 
@@ -319,7 +320,6 @@ model Comment {
   lesson   Lesson?  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   parent   Comment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies  Comment[] @relation("CommentReplies")
-  reactions Reaction[]
 }
 
 // ─── Forum (per course) ────────────────────────────────
@@ -338,7 +338,6 @@ model ForumPost {
   course   Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
   user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   replies  ForumReply[]
-  reactions Reaction[]
 }
 
 model ForumReply {
@@ -351,7 +350,6 @@ model ForumReply {
 
   post ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
   user User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  reactions Reaction[]
 }
 
 // ─── Chat / Messages ────────────────────────────────────
@@ -371,7 +369,6 @@ model Message {
   sender    User          @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
   receiver  User?         @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
   group     Group?        @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  reactions Reaction[]
 }
 
 // ─── Contacts ───────────────────────────────────────────
