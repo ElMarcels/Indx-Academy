@@ -399,32 +399,6 @@ export interface Submodule {
   lessons?: { id: string; title: string; order: number; isFree: boolean }[];
 }
 
-// ─── Activity Types ─────────────────────────────────────
-export interface Activity {
-  id: string;
-  title: string;
-  description: string | null;
-  type: string;
-  content: string | null;
-  config: string | null;
-  maxScore: number | null;
-  dueDate: string | null;
-  order: number;
-  lessonId: string;
-}
-
-export interface ActivitySubmission {
-  id: string;
-  activityId: string;
-  userId: string;
-  content: string | null;
-  fileUrl: string | null;
-  score: number | null;
-  feedback: string | null;
-  status: string;
-  createdAt: string;
-}
-
 // ─── Course Flashcard Types ─────────────────────────────
 export interface CourseFlashcard {
   id: string;

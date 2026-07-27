@@ -50,45 +50,6 @@ model Submodule {
   @@unique([moduleId, order])
 }
 
-// ─── Course Activities (Moodle-style) ────────────────
-
-model Activity {
-  id          String   @id @default(cuid())
-  title       String
-  description String?
-  type        String   @default("PAGE") // PAGE | ASSIGNMENT | FILE | LINK | CHOICE | WORKSHOP | WIKI | DATABASE | GLOSSARY
-  content     String?  // Markdown / HTML content for PAGE type
-  config      String?  // JSON: type-specific config (url for LINK, choices for CHOICE, etc.)
-  maxScore    Int?     // Max score for graded activities
-  dueDate     DateTime?
-  order       Int      @default(0)
-  lessonId    String
-  createdAt   DateTime @default(now())
-
-  lesson     Lesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  submissions ActivitySubmission[]
-
-  @@unique([lessonId, order])
-}
-
-model ActivitySubmission {
-  id         String    @id @default(cuid())
-  activityId String
-  userId     String
-  content    String?   // Text / URL / file reference
-  fileUrl    String?
-  score      Int?
-  feedback   String?
-  status     String    @default("SUBMITTED") // SUBMITTED | GRADED | RETURNED
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-
-  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([activityId, userId])
-}
-
 // ─── Course-Specific Flashcards ──────────────────────
 
 model CourseFlashcard {
@@ -223,7 +184,6 @@ model User {
   createdProjects    CollaborativeProject[]
   courseTeachers  CourseTeacher[]
   aiConversations AIConversation[]
-  activitySubmissions ActivitySubmission[]
   courseFlashcardReviews CourseFlashcardReview[]
   onboarding       UserOnboarding?
 }
@@ -292,7 +252,6 @@ model Lesson {
   files    LessonFile[]
   exercises CodeExercise[]
   terminalCommands TerminalCommand[]
-  activities Activity[]
 
   @@unique([moduleId, order])
 }

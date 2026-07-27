@@ -14,7 +14,6 @@ import { AdminQuizEditor } from '@/components/AdminQuizEditor';
 import { AdminChallengeEditor } from '@/components/AdminChallengeEditor';
 import { AdminLessonFiles } from '@/components/AdminLessonFiles';
 import { SubmoduleManager } from '@/components/SubmoduleManager';
-import { ActivityManager } from '@/components/ActivityManager';
 import { CourseTeachersManager } from '@/components/CourseTeachersManager';
 import { CourseFlashcardsManager } from '@/components/CourseFlashcardsManager';
 
@@ -753,12 +752,6 @@ export default function EditCoursePage() {
                 <div className="p-4 border-t border-dark-800/50">
                   <SubmoduleManager moduleId={mod.id} />
                 </div>
-
-                {mod.lessons.map((lesson) => (
-                  <div key={`act-${lesson.id}`} className="p-4 border-t border-dark-800/30">
-                    <ActivityManager lessonId={lesson.id} />
-                  </div>
-                ))}
               </div>
             ))}
           </div>
