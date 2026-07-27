@@ -363,10 +363,10 @@ export default function ContactosPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => acceptContact(req.id)} className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1">
+                      <button onClick={() => acceptContact(req.contactId)} className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1">
                         <FiCheck size={12} /> Aceptar
                       </button>
-                      <button onClick={() => removeContact(req.id)} className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1">
+                      <button onClick={() => removeContact(req.contactId)} className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1">
                         <FiX size={12} /> Rechazar
                       </button>
                     </div>
