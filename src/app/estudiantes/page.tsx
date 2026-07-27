@@ -73,8 +73,14 @@ export default function StudentsPage() {
               >
                 <Link href={`/estudiantes/${student.id}`} className="card-hover p-5 block">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-brand-500/20 to-accent-500/20 rounded-full flex items-center justify-center border border-brand-500/20">
-                      <FiUser size={20} className="text-brand-400" />
+                    <div className="w-12 h-12 rounded-full overflow-hidden border border-brand-500/20 flex-shrink-0">
+                      {student.image ? (
+                        <img src={student.image} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-brand-500/20 to-accent-500/20 flex items-center justify-center">
+                          <FiUser size={20} className="text-brand-400" />
+                        </div>
+                      )}
                     </div>
                     <div>
                       <h3 className="font-semibold text-white">{student.name || 'Sin nombre'}</h3>

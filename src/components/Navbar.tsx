@@ -93,8 +93,14 @@ export function Navbar() {
               <div className="flex items-center gap-3 pl-3 border-l border-dark-700/50">
                 <Notifications />
                 <Link href={`/estudiantes/${(session.user as any)?.id || ''}`} className="flex items-center gap-2 group">
-                  <motion.div className="w-8 h-8 bg-gradient-to-br from-brand-500/20 to-accent-500/20 rounded-full flex items-center justify-center border border-brand-500/20" whileHover={{ scale: 1.1 }}>
-                    <FiUser size={14} className="text-brand-400" />
+                  <motion.div className="w-8 h-8 rounded-full overflow-hidden border border-brand-500/20 flex-shrink-0" whileHover={{ scale: 1.1 }}>
+                    {(session.user as any)?.image ? (
+                      <img src={(session.user as any).image} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-brand-500/20 to-accent-500/20 flex items-center justify-center">
+                        <FiUser size={14} className="text-brand-400" />
+                      </div>
+                    )}
                   </motion.div>
                   <span className="text-sm text-dark-200 max-w-[100px] truncate group-hover:text-white transition-colors">
                     {session.user?.name || session.user?.email}

@@ -147,6 +147,26 @@
   .markdown-content td { @apply border-t border-dark-800 p-2 text-dark-200 text-sm; }
   .markdown-content img { @apply rounded-xl max-w-full mb-3; }
   .markdown-content hr { @apply border-dark-700 my-6; }
+
+  /* Chat inline markdown */
+  .chat-markdown p { @apply mb-1 last:mb-0; }
+  .chat-markdown strong { @apply font-bold; }
+  .chat-markdown em { @apply italic; }
+  .chat-markdown code { @apply bg-dark-950/30 px-1 rounded text-xs font-mono; }
+  .chat-markdown pre { @apply bg-dark-950/50 rounded-lg p-2 overflow-x-auto my-1; }
+  .chat-markdown pre code { @apply bg-transparent px-0; }
+  .chat-markdown ul { @apply list-disc pl-4 mb-1; }
+  .chat-markdown ol { @apply list-decimal pl-4 mb-1; }
+  .chat-markdown a { @apply underline opacity-90 hover:opacity-100; }
+  .chat-markdown blockquote { @apply border-l-2 border-brand-500/50 pl-2 italic text-dark-400; }
+  .chat-markdown h1, .chat-markdown h2, .chat-markdown h3 { @apply font-bold text-white mb-1; }
+  .chat-markdown h1 { @apply text-base; }
+  .chat-markdown h2 { @apply text-sm; }
+  .chat-markdown h3 { @apply text-xs; }
+
+  .chat-markdown-dark code { @apply bg-white/10; }
+  .chat-markdown-dark pre { @apply bg-white/5; }
+  .chat-markdown-dark a { @apply text-white/80; }
 }
 
 @layer utilities {

@@ -7,9 +7,12 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import {
   FiUsers, FiPlus, FiTrash2, FiShield, FiUserPlus, FiChevronDown, FiChevronUp,
-  FiMessageSquare, FiSettings, FiUserMinus, FiStar, FiPhone, FiVideo, FiPhoneOff,
+  FiMessageSquare, FiUserMinus, FiStar, FiPhone, FiVideo, FiPhoneOff, FiLink2,
+  FiCopy, FiImage, FiFile, FiX, FiDownload, FiClock, FiCheck,
 } from 'react-icons/fi';
 import { ChatPanel } from '@/components/ChatPanel';
+import { ProfilePopup } from '@/components/ProfilePopup';
+import { DeleteConfirmModal } from '@/components/DeleteConfirmModal';
 
 interface GroupMember {
   user: { id: string; name: string | null; email: string; image: string | null };
@@ -31,6 +34,25 @@ interface Contact {
   email: string;
 }
 
+interface InviteLink {
+  id: string;
+  token: string;
+  expiresAt: string;
+  maxUses: number | null;
+  useCount: number;
+  url: string;
+}
+
+interface SharedFile {
+  id: string;
+  content: string;
+  fileUrl: string | null;
+  fileName: string | null;
+  fileType: string | null;
+  senderName: string;
+  createdAt: string;
+}
+
 export default function GroupsPage() {
   const { data: session } = useSession();
   const [groups, setGroups] = useState<Group[]>([]);
@@ -48,8 +70,30 @@ export default function GroupsPage() {
   const [activeCall, setActiveCall] = useState<{ id: string; groupId: string; type: string; startedAt: string } | null>(null);
   const [callTimer, setCallTimer] = useState(0);
 
+  // Invite links
+  const [showInviteLinks, setShowInviteLinks] = useState<string | null>(null);
+  const [inviteLinks, setInviteLinks] = useState<InviteLink[]>([]);
+  const [copiedLink, setCopiedLink] = useState<string | null>(null);
+
+  // Shared files
+  const [showFiles, setShowFiles] = useState<string | null>(null);
+  const [sharedFiles, setSharedFiles] = useState<SharedFile[]>([]);
+
+  // Delete modal
+  const [deleteGroupTarget, setDeleteGroupTarget] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   useEffect(() => {
     loadData();
+  }, []);
+
+  // Handle join link
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const joinToken = params.get('join');
+    if (joinToken) {
+      joinByLink(joinToken);
+    }
   }, []);
 
   useEffect(() => {
@@ -63,6 +107,21 @@ export default function GroupsPage() {
     const m = Math.floor(seconds / 60).toString().padStart(2, '0');
     const s = (seconds % 60).toString().padStart(2, '0');
     return `${m}:${s}`;
+  }
+
+  async function joinByLink(token: string) {
+    try {
+      const res = await fetch(`/api/groups/join/${token}`, { method: 'POST' });
+      if (res.ok) {
+        toast.success('Te has unido al grupo');
+        loadData();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'No se pudo unir al grupo');
+      }
+    } catch {
+      toast.error('Error al unirse al grupo');
+    }
   }
 
   async function startCall(groupId: string, type: 'AUDIO' | 'VIDEO') {
@@ -121,18 +180,11 @@ export default function GroupsPage() {
       const res = await fetch('/api/groups', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: newName,
-          description: newDesc,
-          memberIds: selectedMembers,
-        }),
+        body: JSON.stringify({ name: newName, description: newDesc, memberIds: selectedMembers }),
       });
       if (res.ok) {
         toast.success('Grupo creado');
-        setNewName('');
-        setNewDesc('');
-        setSelectedMembers([]);
-        setShowCreate(false);
+        setNewName(''); setNewDesc(''); setSelectedMembers([]); setShowCreate(false);
         loadData();
       }
     } catch {
@@ -142,9 +194,7 @@ export default function GroupsPage() {
 
   async function loadGroupDetail(groupId: string) {
     if (expandedGroup === groupId) {
-      setExpandedGroup(null);
-      setGroupDetail(null);
-      return;
+      setExpandedGroup(null); setGroupDetail(null); return;
     }
     try {
       const res = await fetch(`/api/groups/${groupId}`);
@@ -187,24 +237,23 @@ export default function GroupsPage() {
       const res = await fetch(`/api/groups/${groupId}/members?userId=${userId}`, { method: 'DELETE' });
       if (res.ok) {
         toast.success('Miembro eliminado');
-        loadGroupDetail(groupId);
-        loadData();
+        loadGroupDetail(groupId); loadData();
       }
     } catch {
       toast.error('Error al eliminar');
     }
   }
 
-  async function toggleAdmin(groupId: string, userId: string, currentRole: string) {
-    const newRole = currentRole === 'ADMIN' ? 'MEMBER' : 'ADMIN';
+  async function changeRole(groupId: string, userId: string, role: string) {
     try {
       const res = await fetch(`/api/groups/${groupId}/members`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, role: newRole }),
+        body: JSON.stringify({ userId, role }),
       });
       if (res.ok) {
-        toast.success(newRole === 'ADMIN' ? 'Ahora es admin' : 'Rol cambiado a miembro');
+        const roleNames: Record<string, string> = { ADMIN: 'Admin', MODERATOR: 'Moderador', MEMBER: 'Miembro' };
+        toast.success(`Rol cambiado a ${roleNames[role] || role}`);
         loadGroupDetail(groupId);
       }
     } catch {
@@ -213,31 +262,77 @@ export default function GroupsPage() {
   }
 
   async function deleteGroup(groupId: string) {
-    if (!confirm('¿Eliminar este grupo? Esta acción no se puede deshacer.')) return;
+    setDeleting(true);
     try {
       const res = await fetch(`/api/groups/${groupId}`, { method: 'DELETE' });
       if (res.ok) {
         toast.success('Grupo eliminado');
-        setExpandedGroup(null);
-        loadData();
+        setExpandedGroup(null); setDeleteGroupTarget(null); loadData();
       }
     } catch {
       toast.error('Error al eliminar');
+    } finally {
+      setDeleting(false);
     }
   }
 
   async function leaveGroup(groupId: string) {
-    if (!confirm('¿Salir del grupo?')) return;
     try {
       const res = await fetch(`/api/groups/${groupId}/members`, { method: 'DELETE' });
       if (res.ok) {
         toast.success('Has salido del grupo');
-        setExpandedGroup(null);
-        loadData();
+        setExpandedGroup(null); loadData();
       }
     } catch {
       toast.error('Error al salir');
     }
+  }
+
+  async function generateInviteLink(groupId: string) {
+    try {
+      const res = await fetch(`/api/groups/${groupId}/invites`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expiresInHours: 24 }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        toast.success('Enlace generado');
+        loadInviteLinks(groupId);
+      }
+    } catch {
+      toast.error('Error al generar enlace');
+    }
+  }
+
+  async function loadInviteLinks(groupId: string) {
+    try {
+      const res = await fetch(`/api/groups/${groupId}/invites`);
+      if (res.ok) {
+        const data = await res.json();
+        setInviteLinks(data.invites || []);
+        setShowInviteLinks(groupId);
+      }
+    } catch { /* silent */ }
+  }
+
+  function copyLink(url: string) {
+    const full = `${window.location.origin}${url}`;
+    navigator.clipboard.writeText(full);
+    setCopiedLink(url);
+    toast.success('Enlace copiado');
+    setTimeout(() => setCopiedLink(null), 2000);
+  }
+
+  async function loadSharedFiles(groupId: string) {
+    try {
+      const res = await fetch(`/api/groups/${groupId}/files`);
+      if (res.ok) {
+        const data = await res.json();
+        setSharedFiles(data.files || []);
+        setShowFiles(groupId);
+      }
+    } catch { /* silent */ }
   }
 
   const myId = (session?.user as any)?.id;
@@ -358,33 +453,102 @@ export default function GroupsPage() {
 
                   <AnimatePresence>
                     {expandedGroup === group.id && groupDetail && groupDetail.id === group.id && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden"
-                      >
+                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                         <div className="border-t border-dark-800/50 p-4">
-                          {/* Call controls */}
-                          <div className="flex items-center gap-2 mb-4">
-                            <button
-                              onClick={() => startCall(group.id, 'AUDIO')}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-green-500/10 text-green-400 hover:bg-green-500/20 text-sm font-medium transition-colors"
-                            >
+                          {/* Action buttons */}
+                          <div className="flex items-center gap-2 mb-4 flex-wrap">
+                            <button onClick={() => startCall(group.id, 'AUDIO')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-green-500/10 text-green-400 hover:bg-green-500/20 text-sm font-medium transition-colors">
                               <FiPhone size={14} /> Llamada
                             </button>
-                            <button
-                              onClick={() => startCall(group.id, 'VIDEO')}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 text-sm font-medium transition-colors"
-                            >
+                            <button onClick={() => startCall(group.id, 'VIDEO')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 text-sm font-medium transition-colors">
                               <FiVideo size={14} /> Video
                             </button>
+                            {myRole === 'ADMIN' && (
+                              <>
+                                <button onClick={() => generateInviteLink(group.id)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 text-sm font-medium transition-colors">
+                                  <FiLink2 size={14} /> Invitar
+                                </button>
+                                <button onClick={() => loadSharedFiles(group.id)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 text-sm font-medium transition-colors">
+                                  <FiImage size={14} /> Archivos
+                                </button>
+                              </>
+                            )}
                             {activeCall && activeCall.groupId === group.id && (
                               <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-green-500/20 text-green-400 text-sm animate-pulse">
                                 <span className="w-2 h-2 bg-green-400 rounded-full" /> En llamada &middot; {formatCallTime(callTimer)}
                               </span>
                             )}
                           </div>
+
+                          {/* Invite links */}
+                          <AnimatePresence>
+                            {showInviteLinks === group.id && (
+                              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="mb-4 p-3 bg-dark-800/50 rounded-xl">
+                                <div className="flex items-center justify-between mb-2">
+                                  <h4 className="text-xs font-semibold text-white">Enlaces de invitación</h4>
+                                  <button onClick={() => setShowInviteLinks(null)} className="text-dark-500 hover:text-white"><FiX size={12} /></button>
+                                </div>
+                                {inviteLinks.length === 0 ? (
+                                  <p className="text-dark-500 text-xs">No hay enlaces activos</p>
+                                ) : (
+                                  <div className="space-y-2">
+                                    {inviteLinks.map((link) => (
+                                      <div key={link.id} className="flex items-center gap-2 p-2 bg-dark-900/50 rounded-lg">
+                                        <FiLink2 size={12} className="text-purple-400 flex-shrink-0" />
+                                        <div className="min-w-0 flex-1">
+                                          <p className="text-xs text-dark-300 truncate">{window.location.origin}{link.url}</p>
+                                          <p className="text-[10px] text-dark-500">
+                                            <FiClock size={8} className="inline" /> Expira: {new Date(link.expiresAt).toLocaleDateString('es-ES')}
+                                            {link.maxUses && ` · ${link.useCount}/${link.maxUses} usos`}
+                                          </p>
+                                        </div>
+                                        <button onClick={() => copyLink(link.url)} className="p-1 text-dark-400 hover:text-brand-400 transition-colors">
+                                          {copiedLink === link.url ? <FiCheck size={12} className="text-emerald-400" /> : <FiCopy size={12} />}
+                                        </button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+
+                          {/* Shared files gallery */}
+                          <AnimatePresence>
+                            {showFiles === group.id && (
+                              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="mb-4 p-3 bg-dark-800/50 rounded-xl">
+                                <div className="flex items-center justify-between mb-2">
+                                  <h4 className="text-xs font-semibold text-white">Archivos compartidos</h4>
+                                  <button onClick={() => setShowFiles(null)} className="text-dark-500 hover:text-white"><FiX size={12} /></button>
+                                </div>
+                                {sharedFiles.length === 0 ? (
+                                  <p className="text-dark-500 text-xs">No hay archivos compartidos</p>
+                                ) : (
+                                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto">
+                                    {sharedFiles.map((f) => (
+                                      <a
+                                        key={f.id}
+                                        href={f.fileUrl || '#'}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="p-2 bg-dark-900/50 rounded-lg hover:bg-dark-900/80 transition-colors block"
+                                      >
+                                        {f.fileType?.startsWith('image/') ? (
+                                          <img src={f.fileUrl || ''} alt="" className="w-full h-20 object-cover rounded-lg mb-1" />
+                                        ) : (
+                                          <div className="w-full h-20 bg-dark-800 rounded-lg flex items-center justify-center mb-1">
+                                            <FiFile size={20} className="text-dark-500" />
+                                          </div>
+                                        )}
+                                        <p className="text-[10px] text-dark-300 truncate">{f.fileName}</p>
+                                        <p className="text-[10px] text-dark-500">{f.senderName}</p>
+                                      </a>
+                                    ))}
+                                  </div>
+                                )}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
 
                           {/* Group chat */}
                           <div className="mb-4">
@@ -399,7 +563,7 @@ export default function GroupsPage() {
                                 <button onClick={() => setShowInvite(showInvite === group.id ? null : group.id)} className="btn-outline text-xs py-1 px-3 flex items-center gap-1">
                                   <FiUserPlus size={12} /> Añadir
                                 </button>
-                                <button onClick={() => deleteGroup(group.id)} className="text-dark-500 hover:text-red-400 transition-colors p-1.5" title="Eliminar grupo">
+                                <button onClick={() => setDeleteGroupTarget(group.id)} className="text-dark-500 hover:text-red-400 transition-colors p-1.5" title="Eliminar grupo">
                                   <FiTrash2 size={14} />
                                 </button>
                               </div>
@@ -409,12 +573,7 @@ export default function GroupsPage() {
                           <AnimatePresence>
                             {showInvite === group.id && (
                               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="mb-3 p-3 bg-dark-800/50 rounded-xl">
-                                <input
-                                  value={inviteSearch}
-                                  onChange={(e) => setInviteSearch(e.target.value)}
-                                  placeholder="Buscar contacto..."
-                                  className="input text-sm mb-2"
-                                />
+                                <input value={inviteSearch} onChange={(e) => setInviteSearch(e.target.value)} placeholder="Buscar contacto..." className="input text-sm mb-2" />
                                 <div className="space-y-1 max-h-32 overflow-y-auto">
                                   {contacts
                                     .filter((c) => !groupDetail.members.some((m: any) => m.user.id === c.id))
@@ -431,17 +590,28 @@ export default function GroupsPage() {
                             )}
                           </AnimatePresence>
 
+                          {/* Members list */}
                           <div className="space-y-1">
                             {groupDetail.members.map((m: GroupMember) => (
                               <div key={m.user.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-dark-800/50 transition-colors">
                                 <Link href={`/estudiantes/${m.user.id}`} className="flex items-center gap-2 flex-1 min-w-0">
-                                  <div className="w-8 h-8 bg-gradient-to-br from-brand-500/20 to-accent-500/20 rounded-full flex items-center justify-center flex-shrink-0">
-                                    {m.role === 'ADMIN' ? (
-                                      <FiStar size={12} className="text-yellow-400" />
-                                    ) : (
-                                      <span className="text-xs text-brand-400 font-bold">{(m.user.name || '?')[0].toUpperCase()}</span>
-                                    )}
-                                  </div>
+                                  <ProfilePopup userId={m.user.id}>
+                                    <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 cursor-pointer">
+                                      {m.user.image ? (
+                                        <img src={m.user.image} alt="" className="w-full h-full object-cover" />
+                                      ) : (
+                                        <div className="w-full h-full bg-gradient-to-br from-brand-500/20 to-accent-500/20 flex items-center justify-center">
+                                          {m.role === 'ADMIN' ? (
+                                            <FiStar size={12} className="text-yellow-400" />
+                                          ) : m.role === 'MODERATOR' ? (
+                                            <FiShield size={12} className="text-blue-400" />
+                                          ) : (
+                                            <span className="text-xs text-brand-400 font-bold">{(m.user.name || '?')[0].toUpperCase()}</span>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </ProfilePopup>
                                   <div className="min-w-0">
                                     <span className="text-sm text-white block truncate">{m.user.name || m.user.email}</span>
                                     {m.user.email && m.user.name && <span className="text-xs text-dark-500 block truncate">{m.user.email}</span>}
@@ -449,11 +619,19 @@ export default function GroupsPage() {
                                 </Link>
                                 <div className="flex items-center gap-1 flex-shrink-0 ml-2">
                                   {m.role === 'ADMIN' && <span className="badge-yellow text-[10px] mr-1">Admin</span>}
+                                  {m.role === 'MODERATOR' && <span className="badge-blue text-[10px] mr-1">Mod</span>}
                                   {myRole === 'ADMIN' && m.user.id !== myId && (
                                     <>
-                                      <button onClick={() => toggleAdmin(group.id, m.user.id, m.role)} className="p-1.5 text-dark-500 hover:text-yellow-400 transition-colors" title={m.role === 'ADMIN' ? 'Quitar admin' : 'Hacer admin'}>
-                                        <FiShield size={12} />
-                                      </button>
+                                      <div className="relative group">
+                                        <button className="p-1.5 text-dark-500 hover:text-yellow-400 transition-colors" title="Cambiar rol">
+                                          <FiShield size={12} />
+                                        </button>
+                                        <div className="absolute right-0 top-full mt-1 card p-1 min-w-[120px] hidden group-hover:block z-10">
+                                          <button onClick={() => changeRole(group.id, m.user.id, 'ADMIN')} className="w-full text-left px-3 py-1.5 text-xs text-dark-200 hover:bg-dark-700 rounded-lg">Admin</button>
+                                          <button onClick={() => changeRole(group.id, m.user.id, 'MODERATOR')} className="w-full text-left px-3 py-1.5 text-xs text-dark-200 hover:bg-dark-700 rounded-lg">Moderador</button>
+                                          <button onClick={() => changeRole(group.id, m.user.id, 'MEMBER')} className="w-full text-left px-3 py-1.5 text-xs text-dark-200 hover:bg-dark-700 rounded-lg">Miembro</button>
+                                        </div>
+                                      </div>
                                       <button onClick={() => removeMember(group.id, m.user.id)} className="p-1.5 text-dark-500 hover:text-red-400 transition-colors" title="Eliminar del grupo">
                                         <FiUserMinus size={12} />
                                       </button>
@@ -479,6 +657,16 @@ export default function GroupsPage() {
           )}
         </motion.div>
       </div>
+
+      {/* Delete group confirmation modal */}
+      <DeleteConfirmModal
+        open={!!deleteGroupTarget}
+        title="Eliminar grupo"
+        message="¿Eliminar este grupo? Esta acción no se puede deshacer. Se eliminarán todos los mensajes y archivos."
+        onConfirm={() => deleteGroupTarget && deleteGroup(deleteGroupTarget)}
+        onCancel={() => setDeleteGroupTarget(null)}
+        loading={deleting}
+      />
     </div>
   );
 }

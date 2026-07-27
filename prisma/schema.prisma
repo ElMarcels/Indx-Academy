@@ -51,11 +51,12 @@ model User {
   email         String    @unique
   emailVerified DateTime?
   password      String?
-  image         String?
-  bio           String?
+  image     String?
+  bio       String?
   role          String    @default("STUDENT") // STUDENT | ADMIN
   interests     String?   // JSON array of interest tags
   pushSubscription String? // JSON push subscription for web notifications
+  lastSeen      DateTime? // Last activity for online status
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -81,6 +82,9 @@ model User {
   callSessions     CallSession[]
   forumPosts       ForumPost[]
   forumReplies     ForumReply[]
+  blockedBy        Contact[]         @relation("BlockedBy")
+  blocking         Contact[]         @relation("Blocking")
+  groupInvites     GroupInvite[]
 }
 
 // ─── Courses ────────────────────────────────────────────
@@ -339,12 +343,16 @@ model ForumReply {
 // ─── Chat / Messages ────────────────────────────────────
 
 model Message {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   content    String
   senderId   String
   receiverId String?
   groupId    String?
-  createdAt  DateTime @default(now())
+  fileUrl    String?
+  fileName   String?
+  fileType   String?
+  isPinned   Boolean   @default(false)
+  createdAt  DateTime  @default(now())
 
   sender   User          @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
   receiver User?         @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
@@ -366,6 +374,22 @@ model Contact {
   @@unique([userId, contactId])
 }
 
+// ─── Group Invite Links ────────────────────────────────
+
+model GroupInvite {
+  id        String   @id @default(cuid())
+  groupId   String
+  token     String   @unique
+  createdById String
+  expiresAt DateTime?
+  maxUses   Int?
+  useCount  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  group     Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  createdBy User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
+}
+
 // ─── Student Groups (private, invite-only) ──────────────
 
 model Group {
@@ -379,13 +403,14 @@ model Group {
   members   GroupMembership[]
   messages  Message[]
   calls     CallSession[]
+  invites   GroupInvite[]
 }
 
 model GroupMembership {
   id       String   @id @default(cuid())
   userId   String
   groupId  String
-  role     String   @default("MEMBER") // ADMIN | MEMBER
+  role     String   @default("MEMBER") // ADMIN | MODERATOR | MEMBER
   joinedAt DateTime @default(now())
 
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)

@@ -29,6 +29,7 @@ export async function GET(req: NextRequest) {
         email: true,
         bio: true,
         image: true,
+        lastSeen: true,
         createdAt: true,
         _count: {
           select: {

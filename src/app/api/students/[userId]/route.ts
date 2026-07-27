@@ -18,6 +18,7 @@ export async function GET(
         bio: true,
         role: true,
         interests: true,
+        lastSeen: true,
         createdAt: true,
         enrollments: {
           include: {

@@ -2,10 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import { FiUserPlus, FiUser, FiCheck, FiX, FiMessageSquare, FiSearch } from 'react-icons/fi';
+import {
+  FiUserPlus, FiUser, FiCheck, FiX, FiMessageSquare, FiSearch, FiShield,
+  FiShieldOff, FiUsers, FiClock, FiUserMinus,
+} from 'react-icons/fi';
+import { ProfilePopup } from '@/components/ProfilePopup';
+import { DeleteConfirmModal } from '@/components/DeleteConfirmModal';
 
 interface Contact {
   id: string;
@@ -13,17 +18,47 @@ interface Contact {
   name: string | null;
   email: string;
   image: string | null;
+  lastSeen: string | null;
+  mutualCount?: number;
+}
+
+interface Suggestion {
+  user: { id: string; name: string | null; email: string; image: string | null };
+  sharedCourses: string[];
+  sharedCoursesCount: number;
+}
+
+function isOnline(lastSeen: string | null): boolean {
+  if (!lastSeen) return false;
+  return Date.now() - new Date(lastSeen).getTime() < 5 * 60 * 1000;
+}
+
+function formatLastSeen(date: string | null): string {
+  if (!date) return 'Nunca';
+  const diffMin = Math.floor((Date.now() - new Date(date).getTime()) / 60000);
+  if (diffMin < 1) return 'Ahora';
+  if (diffMin < 60) return `Hace ${diffMin}m`;
+  const diffH = Math.floor(diffMin / 60);
+  if (diffH < 24) return `Hace ${diffH}h`;
+  return `Hace ${Math.floor(diffH / 24)}d`;
 }
 
 export default function ContactosPage() {
   const { data: session } = useSession();
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [blocked, setBlocked] = useState<Contact[]>([]);
   const [pendingReceived, setPendingReceived] = useState<any[]>([]);
   const [pendingSent, setPendingSent] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [blockTarget, setBlockTarget] = useState<{ id: string; name: string } | null>(null);
+  const [unblockTarget, setUnblockTarget] = useState<{ id: string; name: string } | null>(null);
+  const [blockLoading, setBlockLoading] = useState(false);
+  const [showBlocked, setShowBlocked] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -38,18 +73,29 @@ export default function ContactosPage() {
 
       if (contactsRes.ok) {
         const data = await contactsRes.json();
-        setContacts(data.contacts);
+        setContacts(data.contacts || []);
+        setBlocked(data.blocked || []);
       }
 
       if (allRes.ok) {
         const data = await allRes.json();
-        const myId = (session?.user as any)?.id;
         setPendingReceived(data.pendingReceived || []);
         setPendingSent(data.pendingSent || []);
       }
     } catch { /* silent */ } finally {
       setLoading(false);
     }
+  }
+
+  async function loadSuggestions() {
+    try {
+      const res = await fetch('/api/peers');
+      if (res.ok) {
+        const data = await res.json();
+        setSuggestions(data.suggestions || []);
+        setShowSuggestions(true);
+      }
+    } catch { /* silent */ }
   }
 
   async function searchUsers() {
@@ -120,6 +166,61 @@ export default function ContactosPage() {
     }
   }
 
+  async function blockUser() {
+    if (!blockTarget) return;
+    setBlockLoading(true);
+    try {
+      // Find the contact record or create one
+      const existing = contacts.find((c) => c.id === blockTarget.id);
+      if (existing?.contactId) {
+        const res = await fetch(`/api/contacts/${existing.contactId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'BLOCKED' }),
+        });
+        if (res.ok) {
+          toast.success('Contacto bloqueado');
+          loadData();
+        } else {
+          toast.error('Error al bloquear');
+        }
+      } else {
+        // Create a blocked contact
+        const res = await fetch('/api/contacts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contactId: blockTarget.id }),
+        });
+        if (res.ok) {
+          // Now block it
+          const data = await res.json();
+          toast.success('Contacto bloqueado');
+          loadData();
+        }
+      }
+    } catch {
+      toast.error('Error al bloquear');
+    } finally {
+      setBlockLoading(false);
+      setBlockTarget(null);
+    }
+  }
+
+  async function unblockUser() {
+    if (!unblockTarget) return;
+    try {
+      const res = await fetch(`/api/contacts/${unblockTarget.id}`, { method: 'DELETE' });
+      if (res.ok) {
+        toast.success('Contacto desbloqueado');
+        loadData();
+      }
+    } catch {
+      toast.error('Error al desbloquear');
+    } finally {
+      setUnblockTarget(null);
+    }
+  }
+
   if (loading) {
     return (
       <div className="py-12 section">
@@ -162,9 +263,17 @@ export default function ContactosPage() {
                 {searchResults.map((user) => (
                   <div key={user.id} className="flex items-center justify-between p-3 bg-dark-800/50 rounded-xl">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 bg-gradient-to-br from-brand-500/20 to-accent-500/20 rounded-full flex items-center justify-center">
-                        <FiUser size={14} className="text-brand-400" />
-                      </div>
+                      <ProfilePopup userId={user.id}>
+                        <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 cursor-pointer">
+                          {user.image ? (
+                            <img src={user.image} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-brand-500/20 to-accent-500/20 flex items-center justify-center">
+                              <FiUser size={14} className="text-brand-400" />
+                            </div>
+                          )}
+                        </div>
+                      </ProfilePopup>
                       <div>
                         <span className="text-sm text-white block">{user.name || 'Sin nombre'}</span>
                         <span className="text-xs text-dark-500">{user.email}</span>
@@ -179,6 +288,56 @@ export default function ContactosPage() {
             )}
           </div>
 
+          {/* Suggestions */}
+          <div className="mb-6">
+            {!showSuggestions ? (
+              <button onClick={loadSuggestions} className="text-sm text-brand-400 hover:text-brand-300 transition-colors flex items-center gap-1.5">
+                <FiUsers size={14} /> Personas que podrías conocer
+              </button>
+            ) : (
+              <AnimatePresence>
+                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-lg font-semibold text-white">Personas que podrías conocer</h2>
+                    <button onClick={() => setShowSuggestions(false)} className="text-dark-500 hover:text-white"><FiX size={14} /></button>
+                  </div>
+                  {suggestions.length === 0 ? (
+                    <p className="text-dark-500 text-sm">No hay sugerencias disponibles</p>
+                  ) : (
+                    <div className="grid sm:grid-cols-2 gap-3">
+                      {suggestions.map((s) => (
+                        <div key={s.user.id} className="card p-3 flex items-center justify-between">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <ProfilePopup userId={s.user.id}>
+                              <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 cursor-pointer">
+                                {s.user.image ? (
+                                  <img src={s.user.image} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full bg-gradient-to-br from-brand-500/20 to-accent-500/20 flex items-center justify-center">
+                                    <FiUser size={14} className="text-brand-400" />
+                                  </div>
+                                )}
+                              </div>
+                            </ProfilePopup>
+                            <div className="min-w-0">
+                              <span className="text-sm text-white block truncate">{s.user.name || 'Sin nombre'}</span>
+                              <span className="text-xs text-dark-500 block truncate">
+                                {s.sharedCoursesCount} curso{s.sharedCoursesCount > 1 ? 's' : ''} en común
+                              </span>
+                            </div>
+                          </div>
+                          <button onClick={() => addContact(s.user.id)} className="btn-outline text-xs py-1 px-2 flex-shrink-0 flex items-center gap-1">
+                            <FiUserPlus size={10} /> Añadir
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            )}
+          </div>
+
           {/* Pending received */}
           {pendingReceived.length > 0 && (
             <div className="mb-6">
@@ -187,9 +346,17 @@ export default function ContactosPage() {
                 {pendingReceived.map((req) => (
                   <div key={req.id} className="card p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 rounded-full flex items-center justify-center">
-                        <FiUser size={14} className="text-yellow-400" />
-                      </div>
+                      <ProfilePopup userId={req.id}>
+                        <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 cursor-pointer">
+                          {req.image ? (
+                            <img src={req.image} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 flex items-center justify-center">
+                              <FiUser size={14} className="text-yellow-400" />
+                            </div>
+                          )}
+                        </div>
+                      </ProfilePopup>
                       <div>
                         <span className="text-sm text-white block">{req.name || req.email}</span>
                         <span className="text-xs text-dark-500">Quiere ser tu contacto</span>
@@ -210,7 +377,7 @@ export default function ContactosPage() {
           )}
 
           {/* Contacts list */}
-          <div>
+          <div className="mb-6">
             <h2 className="text-lg font-semibold text-white mb-3">
               Tus contactos <span className="text-dark-500 font-normal text-sm">({contacts.length})</span>
             </h2>
@@ -221,32 +388,118 @@ export default function ContactosPage() {
               </div>
             ) : (
               <div className="grid sm:grid-cols-2 gap-3">
-                {contacts.map((c) => (
-                  <motion.div key={c.contactId || c.id} className="card p-4 flex items-center justify-between" whileHover={{ scale: 1.01 }}>
-                    <Link href={`/estudiantes/${c.id}`} className="flex items-center gap-3 group flex-1 min-w-0">
-                      <div className="w-10 h-10 bg-gradient-to-br from-brand-500/20 to-accent-500/20 rounded-full flex items-center justify-center flex-shrink-0">
-                        <FiUser size={16} className="text-brand-400" />
-                      </div>
-                      <div className="min-w-0">
-                        <span className="text-sm text-white block truncate group-hover:text-brand-400 transition-colors">{c.name || 'Sin nombre'}</span>
-                        <span className="text-xs text-dark-500 block truncate">{c.email}</span>
-                      </div>
-                    </Link>
-                    <div className="flex items-center gap-1 ml-2 flex-shrink-0">
-                      <Link href={`/chat?contactId=${c.id}`} className="p-2 text-dark-500 hover:text-brand-400 transition-colors" title="Enviar mensaje">
-                        <FiMessageSquare size={14} />
+                {contacts.map((c) => {
+                  const online = isOnline(c.lastSeen);
+                  return (
+                    <motion.div key={c.contactId || c.id} className="card p-4 flex items-center justify-between" whileHover={{ scale: 1.01 }}>
+                      <Link href={`/estudiantes/${c.id}`} className="flex items-center gap-3 group flex-1 min-w-0">
+                        <ProfilePopup userId={c.id}>
+                          <div className="relative flex-shrink-0 cursor-pointer">
+                            <div className="w-10 h-10 rounded-full overflow-hidden">
+                              {c.image ? (
+                                <img src={c.image} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full bg-gradient-to-br from-brand-500/20 to-accent-500/20 flex items-center justify-center">
+                                  <FiUser size={14} className="text-brand-400" />
+                                </div>
+                              )}
+                            </div>
+                            <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-dark-900 ${online ? 'bg-emerald-400' : 'bg-dark-600'}`} />
+                          </div>
+                        </ProfilePopup>
+                        <div className="min-w-0">
+                          <span className="text-sm text-white block truncate group-hover:text-brand-400 transition-colors">{c.name || 'Sin nombre'}</span>
+                          <div className="flex items-center gap-1 text-xs text-dark-500">
+                            {online ? (
+                              <span className="text-emerald-400">En línea</span>
+                            ) : (
+                              <span className="flex items-center gap-0.5">
+                                <FiClock size={8} /> {formatLastSeen(c.lastSeen)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </Link>
-                      <button onClick={() => removeContact(c.contactId || c.id)} className="p-2 text-dark-500 hover:text-red-400 transition-colors" title="Eliminar contacto">
-                        <FiX size={14} />
-                      </button>
-                    </div>
-                  </motion.div>
-                ))}
+                      <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+                        <Link href={`/chat?contactId=${c.id}`} className="p-2 text-dark-500 hover:text-brand-400 transition-colors" title="Enviar mensaje">
+                          <FiMessageSquare size={14} />
+                        </Link>
+                        <button
+                          onClick={() => setBlockTarget({ id: c.id, name: c.name || c.email })}
+                          className="p-2 text-dark-500 hover:text-yellow-400 transition-colors"
+                          title="Bloquear contacto"
+                        >
+                          <FiShieldOff size={14} />
+                        </button>
+                        <button onClick={() => removeContact(c.contactId || c.id)} className="p-2 text-dark-500 hover:text-red-400 transition-colors" title="Eliminar contacto">
+                          <FiX size={14} />
+                        </button>
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </div>
             )}
           </div>
+
+          {/* Blocked contacts */}
+          {blocked.length > 0 && (
+            <div>
+              <button
+                onClick={() => setShowBlocked(!showBlocked)}
+                className="text-sm text-dark-500 hover:text-dark-300 transition-colors flex items-center gap-1.5 mb-3"
+              >
+                <FiShield size={14} /> Contactos bloqueados ({blocked.length})
+                <span className="text-[10px]">{showBlocked ? '▲' : '▼'}</span>
+              </button>
+              <AnimatePresence>
+                {showBlocked && (
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-2 overflow-hidden">
+                    {blocked.map((b) => (
+                      <div key={b.id} className="card p-3 flex items-center justify-between opacity-60">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 bg-dark-800 rounded-full flex items-center justify-center">
+                            <FiShield size={14} className="text-red-400" />
+                          </div>
+                          <div>
+                            <span className="text-sm text-dark-300 block">{b.name || b.email}</span>
+                            <span className="text-xs text-dark-600">Bloqueado</span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setUnblockTarget({ id: b.contactId || b.id, name: b.name || b.email })}
+                          className="text-xs text-dark-400 hover:text-emerald-400 transition-colors flex items-center gap-1"
+                        >
+                          <FiShieldOff size={12} /> Desbloquear
+                        </button>
+                      </div>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
         </motion.div>
       </div>
+
+      {/* Block confirmation modal */}
+      <DeleteConfirmModal
+        open={!!blockTarget}
+        title="Bloquear contacto"
+        message={`¿Bloquear a ${blockTarget?.name}? No podrá enviarte mensajes ni ver tu perfil.`}
+        onConfirm={blockUser}
+        onCancel={() => setBlockTarget(null)}
+        loading={blockLoading}
+      />
+
+      {/* Unblock confirmation modal */}
+      <DeleteConfirmModal
+        open={!!unblockTarget}
+        title="Desbloquear contacto"
+        message={`¿Desbloquear a ${unblockTarget?.name}?`}
+        onConfirm={unblockUser}
+        onCancel={() => setUnblockTarget(null)}
+      />
     </div>
   );
 }
