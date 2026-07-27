@@ -337,7 +337,6 @@ export function LessonComments({ lessonId }: LessonCommentsProps) {
           </AnimatePresence>
         </div>
       )}
-    </div>
 
       <ReportModal
         open={!!reportTarget}
