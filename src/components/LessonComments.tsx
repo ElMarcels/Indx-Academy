@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import { useSession } from 'next-auth/react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { FiMessageSquare, FiSend, FiArrowLeft, FiLoader, FiFlag } from 'react-icons/fi';
+import { FiMessageSquare, FiSend, FiArrowLeft, FiLoader, FiFlag, FiTrash2 } from 'react-icons/fi';
 import { Reactions } from './Reactions';
 import { ReportModal } from './ReportModal';
 
@@ -119,6 +119,22 @@ export function LessonComments({ lessonId }: LessonCommentsProps) {
     }
   }
 
+  async function deleteComment(commentId: string) {
+    if (!confirm('¿Eliminar este comentario?')) return;
+    try {
+      const res = await fetch(`/api/comments/${commentId}`, { method: 'DELETE' });
+      if (res.ok) {
+        setComments((prev) => prev.filter((c) => c.id !== commentId).map((c) => ({
+          ...c,
+          replies: (c.replies || []).filter((r) => r.id !== commentId),
+        })));
+        toast.success('Comentario eliminado');
+      } else {
+        toast.error('Error al eliminar');
+      }
+    } catch { toast.error('Error de conexión'); }
+  }
+
   function getInitials(name: string | null, email: string | null) {
     const display = name || email || 'U';
     return display.charAt(0).toUpperCase();
@@ -227,14 +243,24 @@ export function LessonComments({ lessonId }: LessonCommentsProps) {
                       <p className="text-sm text-dark-300 mt-1 whitespace-pre-wrap">{comment.content}</p>
                       <div className="flex items-center justify-between mt-2">
                         <Reactions targetType="COMMENT" targetId={comment.id} compact />
-                        {session && (session?.user as any)?.id !== comment.user.id && (
-                          <button
-                            onClick={() => setReportTarget({ targetType: 'COMMENT', targetId: comment.id })}
-                            className="text-dark-600 hover:text-red-400 transition-colors"
-                          >
-                            <FiFlag size={10} />
-                          </button>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {session && (session?.user as any)?.id === comment.user.id && (
+                            <button
+                              onClick={() => deleteComment(comment.id)}
+                              className="text-dark-600 hover:text-red-400 transition-colors"
+                            >
+                              <FiTrash2 size={10} />
+                            </button>
+                          )}
+                          {session && (session?.user as any)?.id !== comment.user.id && (
+                            <button
+                              onClick={() => setReportTarget({ targetType: 'COMMENT', targetId: comment.id })}
+                              className="text-dark-600 hover:text-red-400 transition-colors"
+                            >
+                              <FiFlag size={10} />
+                            </button>
+                          )}
+                        </div>
                       </div>
                       <button
                         onClick={() => {
@@ -269,14 +295,24 @@ export function LessonComments({ lessonId }: LessonCommentsProps) {
                             <p className="text-sm text-dark-300 mt-1 whitespace-pre-wrap">{reply.content}</p>
                             <div className="flex items-center justify-between mt-1">
                               <Reactions targetType="COMMENT" targetId={reply.id} compact />
-                              {session && (session?.user as any)?.id !== reply.user.id && (
-                                <button
-                                  onClick={() => setReportTarget({ targetType: 'COMMENT', targetId: reply.id })}
-                                  className="text-dark-600 hover:text-red-400 transition-colors"
-                                >
-                                  <FiFlag size={10} />
-                                </button>
-                              )}
+                              <div className="flex items-center gap-2">
+                                {session && (session?.user as any)?.id === reply.user.id && (
+                                  <button
+                                    onClick={() => deleteComment(reply.id)}
+                                    className="text-dark-600 hover:text-red-400 transition-colors"
+                                  >
+                                    <FiTrash2 size={10} />
+                                  </button>
+                                )}
+                                {session && (session?.user as any)?.id !== reply.user.id && (
+                                  <button
+                                    onClick={() => setReportTarget({ targetType: 'COMMENT', targetId: reply.id })}
+                                    className="text-dark-600 hover:text-red-400 transition-colors"
+                                  >
+                                    <FiFlag size={10} />
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>

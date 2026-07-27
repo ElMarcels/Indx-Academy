@@ -5,6 +5,7 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Providers } from '@/components/Providers';
 import { OnboardingTour } from '@/components/OnboardingTour';
+import { AIAssistant } from '@/components/AIAssistant';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -30,6 +31,7 @@ export default function RootLayout({
             <main className="flex-1">{children}</main>
             <Footer />
             <OnboardingTour />
+            <AIAssistant />
           </div>
         </Providers>
       </body>

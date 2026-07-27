@@ -13,6 +13,10 @@ import { MarkdownEditor } from '@/components/MarkdownEditor';
 import { AdminQuizEditor } from '@/components/AdminQuizEditor';
 import { AdminChallengeEditor } from '@/components/AdminChallengeEditor';
 import { AdminLessonFiles } from '@/components/AdminLessonFiles';
+import { SubmoduleManager } from '@/components/SubmoduleManager';
+import { ActivityManager } from '@/components/ActivityManager';
+import { CourseTeachersManager } from '@/components/CourseTeachersManager';
+import { CourseFlashcardsManager } from '@/components/CourseFlashcardsManager';
 
 interface LessonFile {
   id: string;
@@ -80,7 +84,7 @@ export default function EditCoursePage() {
     isFree: false,
   });
 
-  const [activeTab, setActiveTab] = useState<'modules' | 'challenges'>('modules');
+  const [activeTab, setActiveTab] = useState<'modules' | 'challenges' | 'teachers' | 'flashcards'>('modules');
   const [showQuizEditor, setShowQuizEditor] = useState<string | null>(null);
   const [showChallengeForm, setShowChallengeForm] = useState(false);
 
@@ -465,6 +469,26 @@ export default function EditCoursePage() {
           >
             Desafíos
           </button>
+          <button
+            onClick={() => setActiveTab('teachers')}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+              activeTab === 'teachers'
+                ? 'bg-brand-600 text-white'
+                : 'text-dark-400 hover:text-white bg-dark-800/50'
+            }`}
+          >
+            Profesores
+          </button>
+          <button
+            onClick={() => setActiveTab('flashcards')}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+              activeTab === 'flashcards'
+                ? 'bg-brand-600 text-white'
+                : 'text-dark-400 hover:text-white bg-dark-800/50'
+            }`}
+          >
+            Flashcards
+          </button>
         </div>
 
         {activeTab === 'modules' && (
@@ -725,6 +749,16 @@ export default function EditCoursePage() {
                     />
                   </div>
                 )}
+
+                <div className="p-4 border-t border-dark-800/50">
+                  <SubmoduleManager moduleId={mod.id} />
+                </div>
+
+                {mod.lessons.map((lesson) => (
+                  <div key={`act-${lesson.id}`} className="p-4 border-t border-dark-800/30">
+                    <ActivityManager lessonId={lesson.id} />
+                  </div>
+                ))}
               </div>
             ))}
           </div>
@@ -793,6 +827,20 @@ export default function EditCoursePage() {
                 </div>
               )
             )}
+          </div>
+        )}
+
+        {activeTab === 'teachers' && (
+          <div>
+            <h2 className="text-xl font-bold text-white mb-4">Profesores del Curso</h2>
+            <CourseTeachersManager courseId={course.id} />
+          </div>
+        )}
+
+        {activeTab === 'flashcards' && (
+          <div>
+            <h2 className="text-xl font-bold text-white mb-4">Flashcards del Curso</h2>
+            <CourseFlashcardsManager courseId={course.id} />
           </div>
         )}
       </div>

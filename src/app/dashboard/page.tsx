@@ -11,6 +11,7 @@ import { AchievementList } from '@/components/AchievementList';
 import { LearningPaths } from '@/components/LearningPaths';
 import { RecommendedCourses } from '@/components/RecommendedCourses';
 import { Certificate } from '@/components/Certificate';
+import { CertificatePDF } from '@/components/CertificatePDF';
 
 interface EnrolledCourse {
   id: string;
@@ -246,6 +247,12 @@ export default function DashboardPage() {
                       courseId={cert.courseId || cert.id}
                       courseTitle={cert.course?.title || ''}
                       userName={session?.user?.name || ''}
+                      completionDate={cert.completedAt || cert.issuedAt || ''}
+                      certificateNumber={cert.certificateNumber}
+                    />
+                    <CertificatePDF
+                      userName={session?.user?.name || ''}
+                      courseTitle={cert.course?.title || ''}
                       completionDate={cert.completedAt || cert.issuedAt || ''}
                       certificateNumber={cert.certificateNumber}
                     />

@@ -32,7 +32,137 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── Submodules ──────────────────────────────────────
+
+model Submodule {
+  id        String   @id @default(cuid())
+  title     String
+  order     Int
+  moduleId  String
+  createdAt DateTime @default(now())
+
+  module   Module    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  lessons  Lesson[]
+
+  @@unique([moduleId, order])
+}
+
+// ─── Course Activities (Moodle-style) ────────────────
+
+model Activity {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  type        String   @default("PAGE") // PAGE | ASSIGNMENT | FILE | LINK | CHOICE | WORKSHOP | WIKI | DATABASE | GLOSSARY
+  content     String?  // Markdown / HTML content for PAGE type
+  config      String?  // JSON: type-specific config (url for LINK, choices for CHOICE, etc.)
+  maxScore    Int?     // Max score for graded activities
+  dueDate     DateTime?
+  order       Int      @default(0)
+  lessonId    String
+  createdAt   DateTime @default(now())
+
+  lesson     Lesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  submissions ActivitySubmission[]
+
+  @@unique([lessonId, order])
+}
+
+model ActivitySubmission {
+  id         String    @id @default(cuid())
+  activityId String
+  userId     String
+  content    String?   // Text / URL / file reference
+  fileUrl    String?
+  score      Int?
+  feedback   String?
+  status     String    @default("SUBMITTED") // SUBMITTED | GRADED | RETURNED
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([activityId, userId])
+}
+
+// ─── Course-Specific Flashcards ──────────────────────
+
+model CourseFlashcard {
+  id        String   @id @default(cuid())
+  term      String
+  definition String
+  example   String?
+  order     Int      @default(0)
+  courseId   String
+  createdAt DateTime @default(now())
+
+  course   Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  reviews  CourseFlashcardReview[]
+
+  @@unique([courseId, order])
+}
+
+model CourseFlashcardReview {
+  id           String   @id @default(cuid())
+  userId       String
+  flashcardId  String
+  quality      Int
+  interval     Int
+  easeFactor   Float
+  nextReview   DateTime
+  reviewCount  Int      @default(0)
+  lastReviewed DateTime?
+  createdAt    DateTime @default(now())
+
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flashcard CourseFlashcard @relation(fields: [flashcardId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, flashcardId])
+}
+
+// ─── Course Teachers ─────────────────────────────────
+
+model CourseTeacher {
+  id        String   @id @default(cuid())
+  courseId   String
+  userId    String
+  role      String   @default("TEACHER") // TEACHer | ASSISTANT
+  addedAt   DateTime @default(now())
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, userId])
+}
+
+// ─── AI Assistant Conversations ──────────────────────
+
+model AIConversation {
+  id        String   @id @default(cuid())
+  userId    String
+  courseId   String?
+  title     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages AIMessage[]
+
+  @@index([userId])
+}
+
+model AIMessage {
+  id             String   @id @default(cuid())
+  conversationId String
+  role           String   // user | assistant
+  content        String
+  createdAt      DateTime @default(now())
+
+  conversation AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
@@ -91,6 +221,10 @@ model User {
   pathQuizResults  PathQuizResult[]
   projectMemberships ProjectMember[]
   createdProjects    CollaborativeProject[]
+  courseTeachers  CourseTeacher[]
+  aiConversations AIConversation[]
+  activitySubmissions ActivitySubmission[]
+  courseFlashcardReviews CourseFlashcardReview[]
   onboarding       UserOnboarding?
 }
 
@@ -120,6 +254,8 @@ model Course {
   paths       LearningPathCourse[]
   certificates Certificate[]
   surveys     Survey[]
+  teachers    CourseTeacher[]
+  flashcards  CourseFlashcard[]
 }
 
 model Module {
@@ -130,6 +266,7 @@ model Module {
   createdAt DateTime @default(now())
 
   course  Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  submodules Submodule[]
   lessons Lesson[]
   quizzes Quiz[]
 
@@ -145,14 +282,17 @@ model Lesson {
   order       Int
   isFree      Boolean  @default(false)
   moduleId    String
+  submoduleId String?
   createdAt   DateTime @default(now())
 
   module   Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  submodule Submodule?      @relation(fields: [submoduleId], references: [id], onDelete: SetNull)
   progress LessonProgress[]
   comments Comment[]
   files    LessonFile[]
   exercises CodeExercise[]
   terminalCommands TerminalCommand[]
+  activities Activity[]
 
   @@unique([moduleId, order])
 }

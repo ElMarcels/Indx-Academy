@@ -389,3 +389,74 @@ export interface OnboardingState {
   completedSteps: string[];
   completedAt: string | null;
 }
+
+// ─── Submodule Types ────────────────────────────────────
+export interface Submodule {
+  id: string;
+  title: string;
+  order: number;
+  moduleId: string;
+  lessons?: { id: string; title: string; order: number; isFree: boolean }[];
+}
+
+// ─── Activity Types ─────────────────────────────────────
+export interface Activity {
+  id: string;
+  title: string;
+  description: string | null;
+  type: string;
+  content: string | null;
+  config: string | null;
+  maxScore: number | null;
+  dueDate: string | null;
+  order: number;
+  lessonId: string;
+}
+
+export interface ActivitySubmission {
+  id: string;
+  activityId: string;
+  userId: string;
+  content: string | null;
+  fileUrl: string | null;
+  score: number | null;
+  feedback: string | null;
+  status: string;
+  createdAt: string;
+}
+
+// ─── Course Flashcard Types ─────────────────────────────
+export interface CourseFlashcard {
+  id: string;
+  term: string;
+  definition: string;
+  example: string | null;
+  order: number;
+  courseId: string;
+}
+
+// ─── Course Teacher Types ───────────────────────────────
+export interface CourseTeacher {
+  id: string;
+  courseId: string;
+  userId: string;
+  role: string;
+  addedAt: string;
+  user: { id: string; name: string | null; email: string | null; image: string | null };
+}
+
+// ─── AI Assistant Types ─────────────────────────────────
+export interface AIConversation {
+  id: string;
+  title: string | null;
+  courseId: string | null;
+  createdAt: string;
+  messages?: AIMessage[];
+}
+
+export interface AIMessage {
+  id: string;
+  role: string;
+  content: string;
+  createdAt: string;
+}

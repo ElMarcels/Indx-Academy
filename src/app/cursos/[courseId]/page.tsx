@@ -13,6 +13,7 @@ import {
 import { ProgressBar } from '@/components/ProgressBar';
 import { CourseProgress } from '@/components/CourseProgress';
 import { SurveyForm } from '@/components/SurveyForm';
+import { CourseFlashcardViewer } from '@/components/CourseFlashcardViewer';
 
 interface Course {
   id: string;
@@ -373,6 +374,13 @@ export default function CursoPage() {
         {enrolled && (
           <div className="mt-8">
             <SurveyForm courseId={course.id} />
+          </div>
+        )}
+
+        {/* Course Flashcards */}
+        {enrolled && (
+          <div className="mt-8">
+            <CourseFlashcardViewer courseId={course.id} />
           </div>
         )}
       </div>

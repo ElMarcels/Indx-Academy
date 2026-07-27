@@ -17,6 +17,7 @@ import { CourseSidebar } from '@/components/CourseSidebar';
 import { CodeExercise as CodeExerciseComponent } from '@/components/CodeExercise';
 import { VirtualTerminal } from '@/components/VirtualTerminal';
 import { LessonComments } from '@/components/LessonComments';
+import { ActivityViewer } from '@/components/ActivityViewer';
 import type { CodeExercise as CodeExerciseType, TerminalCommand } from '@/types';
 
 const CodeEditor = dynamic(
@@ -434,6 +435,11 @@ export default function LessonPage() {
                 </div>
               </div>
             )}
+
+            {/* Activities */}
+            <div className="mb-6">
+              <ActivityViewer lessonId={lesson.id} />
+            </div>
 
             {/* Comments */}
             <div className="mb-6">
