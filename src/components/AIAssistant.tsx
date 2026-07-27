@@ -317,10 +317,10 @@ export function AIAssistant() {
 
             <div className="p-3 border-t border-dark-800/50">
               <div className="flex gap-2 items-end">
-                <input
+                <textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
                   placeholder="Escribe tu pregunta..."
                   className="flex-1 bg-dark-800/50 border border-dark-700/50 rounded-xl px-3 py-2 text-sm text-white placeholder-dark-500 focus:outline-none focus:border-brand-500/50 resize-none"
                   rows={1}
