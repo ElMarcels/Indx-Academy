@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || '');
 
 function extractKeywords(message: string): string[] {
   const stopwords = new Set([
@@ -30,8 +33,7 @@ function extractKeywords(message: string): string[] {
   return [...new Set(words)];
 }
 
-function buildContextPrompt(
-  message: string,
+function buildSystemPrompt(
   courseContext: { title: string; description: string } | null,
   matchedCourses: { title: string; description: string; category: string | null; level: string }[],
   matchedLessons: { title: string; content: string | null; module: { title: string; course: { title: string } } }[],
@@ -39,11 +41,14 @@ function buildContextPrompt(
 ): string {
   const parts: string[] = [];
 
-  parts.push(`Eres el asistente de IA de Indx Academy, una plataforma de educación en línea. Tu nombre es Indx Assistant. Responde siempre en español de forma amigable y helpful.\n`);
-  parts.push(`Pregunta del usuario: "${message}"\n`);
+  parts.push(`Eres IndxAI, el asistente de inteligencia artificial de Indx Academy, una plataforma de educación en línea para aprender programación y desarrollo. Tu nombre es IndxAI y estás potenciado por Gemma 4 de Google.`);
+  parts.push(`Responde SIEMPRE en español, de forma amigable, clara y helpful. Sé conciso pero completo.`);
+  parts.push(`Tu propósito es ayudar a los estudiantes con sus dudas sobre programación, cursos, lecciones, y cualquier tema relacionado con la plataforma.`);
+  parts.push('');
 
   if (courseContext) {
-    parts.push(`El usuario está consultando sobre el curso: "${courseContext.title}". Descripción: ${courseContext.description}\n`);
+    parts.push(`El usuario está consultando sobre el curso: "${courseContext.title}". Descripción: ${courseContext.description}`);
+    parts.push('');
   }
 
   if (matchedCourses.length > 0) {
@@ -57,7 +62,7 @@ function buildContextPrompt(
   if (matchedLessons.length > 0) {
     parts.push('Lecciones relacionadas encontradas:');
     for (const l of matchedLessons.slice(0, 3)) {
-      const preview = l.content ? l.content.substring(0, 300).replace(/[#*_`]/g, '').trim() : 'Sin contenido disponible';
+      const preview = l.content ? l.content.substring(0, 500).replace(/[#*_`]/g, '').trim() : 'Sin contenido disponible';
       parts.push(`- Lección "${l.title}" del módulo "${l.module.title}" en curso "${l.module.course.title}": ${preview}`);
     }
     parts.push('');
@@ -76,100 +81,15 @@ function buildContextPrompt(
     parts.push('Proporciona una respuesta general útil sobre programación o el uso de la plataforma.');
   }
 
+  parts.push('');
   parts.push('Instrucciones de respuesta:');
-  parts.push('- Si hay contenido relevante, úsalo para construir tu respuesta y menciona de qué curso/lección proviene.');
-  parts.push('- Sé conciso pero completo. Usa formato markdown cuando sea útil (listas, código).');
+  parts.push('- Si hay contenido relevante de la plataforma, úsalo para construir tu respuesta y menciona de qué curso/lección proviene.');
+  parts.push('- Usa formato markdown cuando sea útil (listas, código, negritas).');
   parts.push('- Si la pregunta es sobre programación, incluye ejemplos de código cuando sea apropiado.');
   parts.push('- Si no sabes algo, sé honesto y sugiere al usuario consultar el contenido del curso correspondiente.');
+  parts.push('- Mantén las respuestas concisas y directas.');
 
   return parts.join('\n');
-}
-
-function generateSmartResponse(
-  message: string,
-  courseContext: { title: string; description: string } | null,
-  matchedCourses: { title: string; description: string; category: string | null; level: string }[],
-  matchedLessons: { title: string; content: string | null; module: { title: string; course: { title: string } } }[],
-  matchedGlossary: { term: string; definition: string; example: string | null; category: string | null }[],
-): string {
-  const lowerMsg = message.toLowerCase();
-
-  if (matchedGlossary.length > 0 && matchedLessons.length === 0 && matchedCourses.length === 0) {
-    const g = matchedGlossary[0];
-    let response = `¡Buena pregunta! Aquí tienes lo que encontré en el glosario:\n\n`;
-    response += `**${g.term}**\n${g.definition}\n`;
-    if (g.example) response += `\nEjemplo: ${g.example}\n`;
-    if (matchedGlossary.length > 1) {
-      response += `\nTambién relacionados: ${matchedGlossary.slice(1, 4).map(t => `"${t.term}"`).join(', ')}.`;
-    }
-    response += `\n\n¿Te gustaría saber más sobre algún tema en particular?`;
-    return response;
-  }
-
-  if (matchedLessons.length > 0 && matchedCourses.length <= 1) {
-    const l = matchedLessons[0];
-    let response = `Encontré información relevante en la plataforma:\n\n`;
-    response += `📚 **${l.module.course.title}** → ${l.module.title} → **${l.title}**\n\n`;
-
-    if (l.content) {
-      const cleanContent = l.content.replace(/[#*_`]/g, '').trim();
-      const preview = cleanContent.substring(0, 500);
-      response += `${preview}`;
-      if (cleanContent.length > 500) response += '...';
-      response += '\n\n';
-    }
-
-    if (matchedLessons.length > 1) {
-      response += `También encontré estas lecciones relacionadas:\n`;
-      for (const ml of matchedLessons.slice(1, 4)) {
-        response += `- "${ml.title}" en ${ml.module.course.title}\n`;
-      }
-      response += '\n';
-    }
-
-    response += `¿Quieres que te explique algo específico de esta lección?`;
-    return response;
-  }
-
-  if (matchedCourses.length > 0) {
-    let response = `¡Encontré cursos que podrían ayudarte!\n\n`;
-    for (const c of matchedCourses.slice(0, 3)) {
-      response += `🎓 **${c.title}** (${c.level})\n${c.description.substring(0, 150)}${c.description.length > 150 ? '...' : ''}\n\n`;
-    }
-    response += `¿Te gustaría más detalles sobre alguno de estos cursos?`;
-    return response;
-  }
-
-  if (courseContext) {
-    let response = `Sobre el curso **${courseContext.title}**:\n\n`;
-    response += `Lamentablemente no encontré contenido específico que coincida exactamente con tu pregunta dentro de este curso.\n\n`;
-    response += `Te sugiero revisar las lecciones disponibles en el curso o intentar reformular tu pregunta con términos más específicos.\n\n`;
-    response += `¿Hay algo más en lo que pueda ayudarte?`;
-    return response;
-  }
-
-  const greetings = ['hola', 'buenos dias', 'buenas tardes', 'buenas noches', 'hey'];
-  if (greetings.some(g => lowerMsg.startsWith(g) || lowerMsg === g)) {
-    return `¡Hola! 👋 Soy el asistente de IA de Indx Academy.\n\nPuedo ayudarte con:\n- Explicar conceptos de programación\n- Responder dudas sobre los cursos\n- Definir términos del glosario técnico\n- Orientarte sobre qué curso seguir\n\n¿En qué puedo ayudarte hoy?`;
-  }
-
-  if (lowerMsg.includes('curso') && (lowerMsg.includes('cuál') || lowerMsg.includes('cual') || lowerMsg.includes('recomendar') || lowerMsg.includes('empezar') || lowerMsg.includes('iniciar'))) {
-    return `Para recomendarte un curso, necesito saber un poco más sobre ti.\n\n¿Qué área te interesa?\n- 🌐 Desarrollo Web (HTML, CSS, JavaScript)\n- ⚛️ Frameworks como React o Next.js\n- 🐍 Programación en Python\n- 📱 Desarrollo móvil\n- 💻 Programación general\n\nTambién puedes usar el selector de cursos en el chat para elegir un curso específico y preguntar sobre su contenido.`;
-  }
-
-  if (lowerMsg.includes('certificado') || lowerMsg.includes('certificación')) {
-    return `Los certificados de Indx Academy se generan automáticamente al completar un curso.\n\nRequisitos:\n1. Estar inscrito en el curso\n2. Completar todas las lecciones\n3. Aprobar los quizzes (si los hay)\n4. Completar los desafíos (si los hay)\n\nUna vez que completes todo, recibirás tu certificado con un número único de verificación.`;
-  }
-
-  if (lowerMsg.includes('progreso') || lowerMsg.includes('avance')) {
-    return `Puedes ver tu progreso en el **Dashboard** de la plataforma.\n\nAllí encontrarás:\n- Tus cursos inscritos y porcentaje de avance\n- Lecciones completadas\n- Logros desbloqueados\n- Estadísticas generales\n\n¿Tienes alguna duda sobre tu progreso en algún curso en particular?`;
-  }
-
-  if (lowerMsg.includes('ejercicio') || lowerMsg.includes('desafío') || lowerMsg.includes('challenge')) {
-    return `Los ejercicios y desafíos son una parte clave del aprendizaje en Indx Academy.\n\n**Ejercicios de código:**\n- Aparecen dentro de las lecciones\n- Puedes escribir y ejecutar código directamente\n- Recibes retroalimentación inmediata\n\n**Desafíos:**\n- Son retos más completos al final de los módulos\n- Se evalúan manualmente o automáticamente\n- Otorgan puntos extra\n\n¿Necesitas ayuda con algún ejercicio específico?`;
-  }
-
-  return `No encontré contenido específico en la plataforma relacionado con tu pregunta, pero puedo ayudarte de otras formas:\n\n- **Pregunta sobre un curso específico** → Selecciona un curso en el chat para contextualizar\n- **Conceptos de programación** → Pregúntame directamente\n- **Términos técnicos** → Consulto el glosario de la plataforma\n\n¿Qué te gustaría saber?`;
 }
 
 export async function POST(req: NextRequest) {
@@ -183,6 +103,10 @@ export async function POST(req: NextRequest) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
       return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
+    }
+
+    if (!process.env.GOOGLE_AI_API_KEY) {
+      return NextResponse.json({ error: 'GOOGLE_AI_API_KEY no configurada' }, { status: 500 });
     }
 
     const body = await req.json();
@@ -297,13 +221,38 @@ export async function POST(req: NextRequest) {
       take: 5,
     });
 
-    const assistantResponse = generateSmartResponse(
-      message,
+    const systemPrompt = buildSystemPrompt(
       courseContext,
       matchedCourses,
       matchedLessons,
       matchedGlossary,
     );
+
+    // Build conversation history for context
+    const conversationHistory = await prisma.aIMessage.findMany({
+      where: { conversationId: activeConversationId },
+      orderBy: { createdAt: 'asc' },
+      take: 20,
+    });
+
+    const historyContents = conversationHistory
+      .filter(m => m.role === 'user' || m.role === 'assistant')
+      .map(m => ({
+        role: m.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: m.content }],
+      }));
+
+    const model = genAI.getGenerativeModel({
+      model: 'gemma-4-26b-a4b-it',
+      systemInstruction: systemPrompt,
+    });
+
+    const chat = model.startChat({
+      history: historyContents.length > 1 ? historyContents.slice(0, -1) : [],
+    });
+
+    const result = await chat.sendMessage(message.trim());
+    const assistantResponse = result.response.text();
 
     const assistantMessage = await prisma.aIMessage.create({
       data: {
@@ -323,7 +272,7 @@ export async function POST(req: NextRequest) {
       conversationId: activeConversationId,
     });
   } catch (error) {
-    console.error('AI chat error:', error);
+    console.error('IndxAI chat error:', error);
     return NextResponse.json({ error: 'Error al procesar el mensaje' }, { status: 500 });
   }
 }

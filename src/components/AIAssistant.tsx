@@ -31,7 +31,7 @@ interface CourseOption {
   title: string;
 }
 
-export function AIAssistant() {
+export function IndxAI() {
   const { data: session } = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const [conversations, setConversations] = useState<AIConversation[]>([]);
@@ -141,11 +141,11 @@ export function AIAssistant() {
         }
       } else {
         setMessages((prev) => prev.filter((m) => !m.id.startsWith('temp-')));
-        toast.error('Error al obtener respuesta');
+        toast.error('Error al obtener respuesta de IndxAI');
       }
     } catch {
       setMessages((prev) => prev.filter((m) => !m.id.startsWith('temp-')));
-      toast.error('Error de conexión');
+      toast.error('Error de conexión con IndxAI');
     } finally {
       setSending(false);
     }
@@ -171,6 +171,7 @@ export function AIAssistant() {
         className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-brand-500 to-accent-500 text-white shadow-lg shadow-brand-500/25 flex items-center justify-center hover:shadow-brand-500/40 transition-shadow"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
+        aria-label="Abrir IndxAI"
       >
         {isOpen ? <FiX size={22} /> : <FiMessageSquare size={22} />}
       </motion.button>
@@ -190,8 +191,8 @@ export function AIAssistant() {
                 <FiMessageSquare size={16} className="text-brand-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-semibold text-white">Asistente IA</h3>
-                <p className="text-[10px] text-dark-500">Pregúntame lo que quieras</p>
+                <h3 className="text-sm font-semibold text-white">IndxAI</h3>
+                <p className="text-[10px] text-dark-500">Asistente IA potenciado por Gemma 4</p>
               </div>
               <button
                 onClick={() => setShowConversations(!showConversations)}
@@ -263,7 +264,7 @@ export function AIAssistant() {
                   onChange={(e) => setSelectedCourseId(e.target.value || null)}
                   className="w-full text-[11px] bg-dark-800/50 border border-dark-700/50 rounded-lg px-2 py-1.5 text-dark-300 focus:outline-none focus:border-brand-500/50"
                 >
-                  <option value="">Todas las courses</option>
+                  <option value="">Todos los cursos</option>
                   {courses.map((c) => (
                     <option key={c.id} value={c.id}>{c.title}</option>
                   ))}
@@ -277,8 +278,9 @@ export function AIAssistant() {
                   <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-500/10 to-accent-500/10 border border-brand-500/10 flex items-center justify-center mx-auto mb-3">
                     <FiMessageSquare size={20} className="text-brand-400/50" />
                   </div>
-                  <p className="text-dark-400 text-sm mb-1">Hola, soy tu asistente IA</p>
-                  <p className="text-dark-500 text-xs">Pregúntame sobre cursos, lecciones, glosario o cualquier tema de la plataforma</p>
+                  <p className="text-dark-400 text-sm mb-1">Hola, soy <span className="text-brand-400 font-semibold">IndxAI</span></p>
+                  <p className="text-dark-500 text-xs mb-2">Tu asistente de IA potenciado por Gemma 4</p>
+                  <p className="text-dark-500 text-xs">Pregúntame sobre cursos, lecciones, glosario o cualquier tema de programación</p>
                 </div>
               )}
 
@@ -321,7 +323,7 @@ export function AIAssistant() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-                  placeholder="Escribe tu pregunta..."
+                  placeholder="Pregúntale a IndxAI..."
                   className="flex-1 bg-dark-800/50 border border-dark-700/50 rounded-xl px-3 py-2 text-sm text-white placeholder-dark-500 focus:outline-none focus:border-brand-500/50 resize-none"
                   rows={1}
                   disabled={sending}

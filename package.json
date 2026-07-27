@@ -29,7 +29,8 @@
     "@monaco-editor/react": "^4.6.0",
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.8.2",
-    "file-saver": "^2.0.5"
+    "file-saver": "^2.0.5",
+    "@google/generative-ai": "^0.24.0"
   },
   "devDependencies": {
     "typescript": "^5.4.0",
