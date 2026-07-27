@@ -657,20 +657,21 @@ export function ActivityManager({ lessonId }: ActivityManagerProps) {
 
       <AnimatePresence>
         {formOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 bg-dark-950/80 backdrop-blur-sm"
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          >
+            <div
+              className="absolute inset-0 bg-dark-950/80 backdrop-blur-sm"
               onClick={() => setFormOpen(false)}
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="fixed inset-0 z-50 flex items-center justify-center p-4"
-              onClick={(e) => e.target === e.currentTarget && setFormOpen(false)}
+              className="relative"
             >
               <form
                 onSubmit={handleSubmit}
@@ -786,7 +787,7 @@ export function ActivityManager({ lessonId }: ActivityManagerProps) {
                 </div>
               </form>
             </motion.div>
-          </>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
