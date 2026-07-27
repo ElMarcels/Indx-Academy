@@ -82,8 +82,6 @@ model User {
   callSessions     CallSession[]
   forumPosts       ForumPost[]
   forumReplies     ForumReply[]
-  blockedBy        Contact[]         @relation("BlockedBy")
-  blocking         Contact[]         @relation("Blocking")
   groupInvites     GroupInvite[]
 }
 
