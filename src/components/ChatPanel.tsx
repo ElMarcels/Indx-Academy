@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
-  FiSend, FiMessageSquare, FiSearch, FiPaperclip, FiPin, FiTrash2,
+  FiSend, FiMessageSquare, FiSearch, FiPaperclip, FiBookmark, FiTrash2,
   FiX, FiImage, FiFile, FiMoreVertical, FiDownload,
 } from 'react-icons/fi';
 import { ProfilePopup } from '@/components/ProfilePopup';
@@ -306,7 +306,7 @@ export function ChatPanel({ groupId, contactId, contactName }: ChatProps) {
                 onClick={() => setShowPinned(!showPinned)}
                 className="flex items-center gap-1 text-xs text-dark-400 hover:text-brand-400 transition-colors px-2 py-1 rounded-lg hover:bg-dark-800/50"
               >
-                <FiPin size={12} /> {pinnedCount}
+                <FiBookmark size={12} /> {pinnedCount}
               </button>
             )}
             <button
@@ -365,7 +365,7 @@ export function ChatPanel({ groupId, contactId, contactName }: ChatProps) {
               className="overflow-hidden border-b border-dark-800/50"
             >
               <div className="p-3 max-h-40 overflow-y-auto space-y-1">
-                <p className="text-[10px] text-dark-500 mb-1 flex items-center gap-1"><FiPin size={10} /> Mensajes fijados</p>
+                <p className="text-[10px] text-dark-500 mb-1 flex items-center gap-1"><FiBookmark size={10} /> Mensajes fijados</p>
                 {pinnedMessages.map((pm) => (
                   <div key={pm.id} className="p-2 bg-brand-500/5 border border-brand-500/10 rounded-lg text-xs flex items-center justify-between">
                     <div className="min-w-0 flex-1">
@@ -414,7 +414,7 @@ export function ChatPanel({ groupId, contactId, contactName }: ChatProps) {
                         </div>
                       </ProfilePopup>
                       <span className="text-xs text-brand-400">{msg.senderName}</span>
-                      {msg.isPinned && <FiPin size={10} className="text-yellow-400" />}
+                      {msg.isPinned && <FiBookmark size={10} className="text-yellow-400" />}
                     </div>
                   )}
 
@@ -483,7 +483,7 @@ export function ChatPanel({ groupId, contactId, contactName }: ChatProps) {
 
                     {/* Pin indicator for own messages */}
                     {isMe && msg.isPinned && (
-                      <FiPin size={10} className="absolute -top-1 -right-1 text-yellow-400" />
+                      <FiBookmark size={10} className="absolute -top-1 -right-1 text-yellow-400" />
                     )}
                   </div>
 
@@ -579,7 +579,7 @@ export function ChatPanel({ groupId, contactId, contactName }: ChatProps) {
                   onClick={() => togglePin(contextMenu.msg.id)}
                   className="w-full text-left px-3 py-1.5 text-xs text-dark-200 hover:bg-dark-700 rounded-lg flex items-center gap-2 transition-colors"
                 >
-                  <FiPin size={12} /> {contextMenu.msg.isPinned ? 'Desfijar' : 'Fijar mensaje'}
+                  <FiBookmark size={12} /> {contextMenu.msg.isPinned ? 'Desfijar' : 'Fijar mensaje'}
                 </button>
                 <button
                   onClick={() => { setDeleteTarget(contextMenu.msg.id); setContextMenu(null); }}
@@ -594,7 +594,7 @@ export function ChatPanel({ groupId, contactId, contactName }: ChatProps) {
                 onClick={() => togglePin(contextMenu.msg.id)}
                 className="w-full text-left px-3 py-1.5 text-xs text-dark-200 hover:bg-dark-700 rounded-lg flex items-center gap-2 transition-colors"
               >
-                <FiPin size={12} /> {contextMenu.msg.isPinned ? 'Desfijar' : 'Fijar mensaje'}
+                <FiBookmark size={12} /> {contextMenu.msg.isPinned ? 'Desfijar' : 'Fijar mensaje'}
               </button>
             )}
           </motion.div>
