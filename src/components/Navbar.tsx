@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiMenu, FiX, FiUser, FiLogOut, FiShield, FiStar, FiUsers, FiMessageSquare, FiUserPlus, FiBook,
+  FiLayers, FiGlobe,
 } from 'react-icons/fi';
 import { Notifications } from '@/components/Notifications';
 
@@ -61,8 +62,12 @@ export function Navbar() {
             {session && (
               <>
                 <NavLink href="/dashboard">Mi Aprendizaje</NavLink>
+                <NavLink href="/contactos">Contactos</NavLink>
+                <NavLink href="/grupos">Grupos</NavLink>
                 <NavLink href="/estudiantes">Estudiantes</NavLink>
                 <NavLink href="/chat">Chat</NavLink>
+                <NavLink href="/glosario">Glosario</NavLink>
+                <NavLink href="/rutas">Rutas</NavLink>
                 <NavLink href="/soporte">Soporte</NavLink>
               </>
             )}
@@ -141,11 +146,23 @@ export function Navbar() {
                     <Link href="/dashboard" className="flex items-center gap-2.5 text-dark-300 hover:text-white py-2.5 px-3 text-sm rounded-xl hover:bg-dark-800/40 transition-all" onClick={() => setMobileOpen(false)}>
                       <FiBook size={15} /> Mi Aprendizaje
                     </Link>
+                    <Link href="/contactos" className="flex items-center gap-2.5 text-dark-300 hover:text-white py-2.5 px-3 text-sm rounded-xl hover:bg-dark-800/40 transition-all" onClick={() => setMobileOpen(false)}>
+                      <FiUserPlus size={15} /> Contactos
+                    </Link>
+                    <Link href="/grupos" className="flex items-center gap-2.5 text-dark-300 hover:text-white py-2.5 px-3 text-sm rounded-xl hover:bg-dark-800/40 transition-all" onClick={() => setMobileOpen(false)}>
+                      <FiUsers size={15} /> Grupos
+                    </Link>
                     <Link href="/estudiantes" className="flex items-center gap-2.5 text-dark-300 hover:text-white py-2.5 px-3 text-sm rounded-xl hover:bg-dark-800/40 transition-all" onClick={() => setMobileOpen(false)}>
                       <FiUsers size={15} /> Estudiantes
                     </Link>
                     <Link href="/chat" className="flex items-center gap-2.5 text-dark-300 hover:text-white py-2.5 px-3 text-sm rounded-xl hover:bg-dark-800/40 transition-all" onClick={() => setMobileOpen(false)}>
                       <FiMessageSquare size={15} /> Chat
+                    </Link>
+                    <Link href="/glosario" className="flex items-center gap-2.5 text-dark-300 hover:text-white py-2.5 px-3 text-sm rounded-xl hover:bg-dark-800/40 transition-all" onClick={() => setMobileOpen(false)}>
+                      <FiGlobe size={15} /> Glosario
+                    </Link>
+                    <Link href="/rutas" className="flex items-center gap-2.5 text-dark-300 hover:text-white py-2.5 px-3 text-sm rounded-xl hover:bg-dark-800/40 transition-all" onClick={() => setMobileOpen(false)}>
+                      <FiLayers size={15} /> Rutas
                     </Link>
                     <Link href="/soporte" className="flex items-center gap-2.5 text-dark-300 hover:text-white py-2.5 px-3 text-sm rounded-xl hover:bg-dark-800/40 transition-all" onClick={() => setMobileOpen(false)}>
                       <FiUserPlus size={15} /> Soporte
