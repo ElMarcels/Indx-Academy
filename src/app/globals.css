@@ -106,23 +106,23 @@
   }
 
   .badge-green {
-    @apply badge bg-emerald-500/12 text-emerald-400 border border-emerald-500/20;
+    @apply badge bg-emerald-500/10 text-emerald-400 border border-emerald-500/20;
   }
 
   .badge-blue {
-    @apply badge bg-brand-500/12 text-brand-400 border border-brand-500/20;
+    @apply badge bg-brand-500/10 text-brand-400 border border-brand-500/20;
   }
 
   .badge-purple {
-    @apply badge bg-accent-500/12 text-accent-400 border border-accent-500/20;
+    @apply badge bg-accent-500/10 text-accent-400 border border-accent-500/20;
   }
 
   .badge-yellow {
-    @apply badge bg-yellow-500/12 text-yellow-400 border border-yellow-500/20;
+    @apply badge bg-yellow-500/10 text-yellow-400 border border-yellow-500/20;
   }
 
   .badge-red {
-    @apply badge bg-red-500/12 text-red-400 border border-red-500/20;
+    @apply badge bg-red-500/10 text-red-400 border border-red-500/20;
   }
 
   .badge-free {
