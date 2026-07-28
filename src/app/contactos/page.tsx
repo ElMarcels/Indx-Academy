@@ -7,7 +7,7 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import {
   FiUserPlus, FiUser, FiCheck, FiX, FiMessageSquare, FiSearch, FiShield,
-  FiShieldOff, FiUsers, FiClock, FiUserMinus,
+  FiShieldOff, FiUsers, FiClock, FiUserMinus, FiArrowRight,
 } from 'react-icons/fi';
 import { ProfilePopup } from '@/components/ProfilePopup';
 import { DeleteConfirmModal } from '@/components/DeleteConfirmModal';
@@ -42,6 +42,24 @@ function formatLastSeen(date: string | null): string {
   if (diffH < 24) return `Hace ${diffH}h`;
   return `Hace ${Math.floor(diffH / 24)}d`;
 }
+
+function getInitials(name: string | null, email: string): string {
+  if (name) {
+    const parts = name.split(' ');
+    return parts.length > 1 ? `${parts[0][0]}${parts[1][0]}` : parts[0][0];
+  }
+  return email[0].toUpperCase();
+}
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.05 } },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 12 },
+  show: { opacity: 1, y: 0 },
+};
 
 export default function ContactosPage() {
   const { data: session } = useSession();
@@ -170,7 +188,6 @@ export default function ContactosPage() {
     if (!blockTarget) return;
     setBlockLoading(true);
     try {
-      // Find the contact record or create one
       const existing = contacts.find((c) => c.id === blockTarget.id);
       if (existing?.contactId) {
         const res = await fetch(`/api/contacts/${existing.contactId}`, {
@@ -185,15 +202,12 @@ export default function ContactosPage() {
           toast.error('Error al bloquear');
         }
       } else {
-        // Create a blocked contact
         const res = await fetch('/api/contacts', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ contactId: blockTarget.id }),
         });
         if (res.ok) {
-          // Now block it
-          const data = await res.json();
           toast.success('Contacto bloqueado');
           loadData();
         }
@@ -224,28 +238,51 @@ export default function ContactosPage() {
   if (loading) {
     return (
       <div className="py-12 section">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 skeleton w-1/3" />
-          <div className="h-12 skeleton rounded-xl" />
+        <div className="animate-pulse space-y-6">
+          <div className="h-32 skeleton rounded-2xl" />
+          <div className="h-14 skeleton rounded-xl" />
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => <div key={i} className="h-24 skeleton rounded-xl" />)}
+            {[1, 2, 3, 4, 5, 6].map((i) => <div key={i} className="h-20 skeleton rounded-xl" />)}
           </div>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="py-12">
-      <div className="section max-w-4xl">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <h1 className="page-title">Contactos</h1>
+  const onlineCount = contacts.filter((c) => isOnline(c.lastSeen)).length;
 
-          {/* Search */}
+  return (
+    <div className="py-8">
+      <div className="section max-w-5xl">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          {/* Hero header */}
+          <div className="relative rounded-2xl overflow-hidden mb-8">
+            <div className="absolute inset-0 bg-gradient-to-br from-brand-600/20 via-accent-600/10 to-emerald-600/10" />
+            <div className="absolute inset-0 bg-dark-900/40 backdrop-blur-sm" />
+            <div className="relative p-6 md:p-8">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-bold text-white mb-1">Contactos</h1>
+                  <p className="text-dark-300 text-sm">Gestiona tu red de aprendizaje</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 bg-dark-800/50 rounded-xl px-4 py-2">
+                    <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                    <span className="text-sm text-dark-200">{onlineCount} en línea</span>
+                  </div>
+                  <div className="bg-dark-800/50 rounded-xl px-4 py-2">
+                    <span className="text-sm text-dark-200">{contacts.length} contacto{contacts.length !== 1 ? 's' : ''}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Search bar */}
           <div className="card p-4 mb-6">
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <div className="flex-1 relative">
-                <FiSearch size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-500" />
+                <FiSearch size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-dark-500" />
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -254,84 +291,101 @@ export default function ContactosPage() {
                   className="input pl-10"
                 />
               </div>
-              <button onClick={searchUsers} disabled={searching} className="btn-primary text-sm">
-                {searching ? 'Buscando...' : 'Buscar'}
+              <button onClick={searchUsers} disabled={searching} className="btn-primary text-sm flex items-center gap-2">
+                {searching ? (
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <FiSearch size={14} />
+                )}
+                Buscar
               </button>
             </div>
-            {searchResults.length > 0 && (
-              <div className="mt-3 space-y-2">
-                {searchResults.map((user) => (
-                  <div key={user.id} className="flex items-center justify-between p-3 bg-dark-800/50 rounded-xl">
-                    <div className="flex items-center gap-3">
-                      <ProfilePopup userId={user.id}>
-                        <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 cursor-pointer">
-                          {user.image ? (
-                            <img src={user.image} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-brand-500/20 to-accent-500/20 flex items-center justify-center">
-                              <FiUser size={14} className="text-brand-400" />
-                            </div>
-                          )}
+
+            <AnimatePresence>
+              {searchResults.length > 0 && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mt-4 space-y-2 overflow-hidden">
+                  {searchResults.map((user) => (
+                    <motion.div key={user.id} variants={itemVariants} initial="hidden" animate="show" className="flex items-center justify-between p-3 rounded-xl bg-dark-800/40 hover:bg-dark-800/60 transition-colors group">
+                      <div className="flex items-center gap-3">
+                        <ProfilePopup userId={user.id}>
+                          <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 cursor-pointer ring-2 ring-dark-700/50 group-hover:ring-brand-500/30 transition-all">
+                            {user.image ? (
+                              <img src={user.image} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="avatar-placeholder">
+                                <FiUser size={14} className="text-brand-400" />
+                              </div>
+                            )}
+                          </div>
+                        </ProfilePopup>
+                        <div>
+                          <span className="text-sm font-medium text-white block">{user.name || 'Sin nombre'}</span>
+                          <span className="text-xs text-dark-500">{user.email}</span>
                         </div>
-                      </ProfilePopup>
-                      <div>
-                        <span className="text-sm text-white block">{user.name || 'Sin nombre'}</span>
-                        <span className="text-xs text-dark-500">{user.email}</span>
                       </div>
-                    </div>
-                    <button onClick={() => addContact(user.id)} className="btn-outline text-xs py-1.5 px-3 flex items-center gap-1">
-                      <FiUserPlus size={12} /> Añadir
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+                      <button onClick={() => addContact(user.id)} className="btn-outline text-xs py-1.5 px-3 flex items-center gap-1.5">
+                        <FiUserPlus size={12} /> Añadir
+                      </button>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Suggestions */}
-          <div className="mb-6">
+          <div className="mb-8">
             {!showSuggestions ? (
-              <button onClick={loadSuggestions} className="text-sm text-brand-400 hover:text-brand-300 transition-colors flex items-center gap-1.5">
-                <FiUsers size={14} /> Personas que podrías conocer
+              <button onClick={loadSuggestions} className="group flex items-center gap-2 text-sm text-brand-400 hover:text-brand-300 transition-colors">
+                <div className="w-8 h-8 rounded-lg bg-brand-500/10 flex items-center justify-center group-hover:bg-brand-500/20 transition-colors">
+                  <FiUsers size={14} />
+                </div>
+                Personas que podrías conocer
+                <FiArrowRight size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
               </button>
             ) : (
               <AnimatePresence>
                 <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                  <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-lg font-semibold text-white">Personas que podrías conocer</h2>
-                    <button onClick={() => setShowSuggestions(false)} className="text-dark-500 hover:text-white"><FiX size={14} /></button>
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold text-white">Sugerencias</h2>
+                    <button onClick={() => setShowSuggestions(false)} className="text-dark-500 hover:text-white transition-colors">
+                      <FiX size={16} />
+                    </button>
                   </div>
                   {suggestions.length === 0 ? (
-                    <p className="text-dark-500 text-sm">No hay sugerencias disponibles</p>
+                    <div className="card p-8 text-center">
+                      <FiUsers size={24} className="text-dark-600 mx-auto mb-2" />
+                      <p className="text-dark-500 text-sm">No hay sugerencias disponibles</p>
+                    </div>
                   ) : (
-                    <div className="grid sm:grid-cols-2 gap-3">
+                    <motion.div variants={containerVariants} initial="hidden" animate="show" className="grid sm:grid-cols-2 gap-3">
                       {suggestions.map((s) => (
-                        <div key={s.user.id} className="card p-3 flex items-center justify-between">
+                        <motion.div key={s.user.id} variants={itemVariants} className="card p-4 flex items-center justify-between hover:border-brand-500/20 transition-all group">
                           <div className="flex items-center gap-3 min-w-0">
                             <ProfilePopup userId={s.user.id}>
-                              <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 cursor-pointer">
+                              <div className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0 cursor-pointer ring-2 ring-dark-700/50 group-hover:ring-brand-500/30 transition-all">
                                 {s.user.image ? (
                                   <img src={s.user.image} alt="" className="w-full h-full object-cover" />
                                 ) : (
-                                  <div className="w-full h-full bg-gradient-to-br from-brand-500/20 to-accent-500/20 flex items-center justify-center">
+                                  <div className="avatar-placeholder">
                                     <FiUser size={14} className="text-brand-400" />
                                   </div>
                                 )}
                               </div>
                             </ProfilePopup>
                             <div className="min-w-0">
-                              <span className="text-sm text-white block truncate">{s.user.name || 'Sin nombre'}</span>
+                              <span className="text-sm font-medium text-white block truncate">{s.user.name || 'Sin nombre'}</span>
                               <span className="text-xs text-dark-500 block truncate">
                                 {s.sharedCoursesCount} curso{s.sharedCoursesCount > 1 ? 's' : ''} en común
                               </span>
                             </div>
                           </div>
-                          <button onClick={() => addContact(s.user.id)} className="btn-outline text-xs py-1 px-2 flex-shrink-0 flex items-center gap-1">
+                          <button onClick={() => addContact(s.user.id)} className="btn-outline text-xs py-1.5 px-3 flex-shrink-0 flex items-center gap-1.5">
                             <FiUserPlus size={10} /> Añadir
                           </button>
-                        </div>
+                        </motion.div>
                       ))}
-                    </div>
+                    </motion.div>
                   )}
                 </motion.div>
               </AnimatePresence>
@@ -340,14 +394,18 @@ export default function ContactosPage() {
 
           {/* Pending received */}
           {pendingReceived.length > 0 && (
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold text-white mb-3">Solicitudes recibidas</h2>
-              <div className="space-y-2">
+            <div className="mb-8">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full" />
+                <h2 className="text-lg font-semibold text-white">Solicitudes recibidas</h2>
+                <span className="badge-yellow text-[10px]">{pendingReceived.length}</span>
+              </div>
+              <motion.div variants={containerVariants} initial="hidden" animate="show" className="space-y-2">
                 {pendingReceived.map((req) => (
-                  <div key={req.id} className="card p-4 flex items-center justify-between">
+                  <motion.div key={req.id} variants={itemVariants} className="card p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <ProfilePopup userId={req.id}>
-                        <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 cursor-pointer">
+                        <div className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0 cursor-pointer ring-2 ring-yellow-500/20">
                           {req.image ? (
                             <img src={req.image} alt="" className="w-full h-full object-cover" />
                           ) : (
@@ -358,7 +416,7 @@ export default function ContactosPage() {
                         </div>
                       </ProfilePopup>
                       <div>
-                        <span className="text-sm text-white block">{req.name || req.email}</span>
+                        <span className="text-sm font-medium text-white block">{req.name || req.email}</span>
                         <span className="text-xs text-dark-500">Quiere ser tu contacto</span>
                       </div>
                     </div>
@@ -370,75 +428,86 @@ export default function ContactosPage() {
                         <FiX size={12} /> Rechazar
                       </button>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
             </div>
           )}
 
           {/* Contacts list */}
-          <div className="mb-6">
-            <h2 className="text-lg font-semibold text-white mb-3">
-              Tus contactos <span className="text-dark-500 font-normal text-sm">({contacts.length})</span>
-            </h2>
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white">
+                Tus contactos
+              </h2>
+              <span className="text-xs text-dark-500">{contacts.length}</span>
+            </div>
             {contacts.length === 0 ? (
-              <div className="card p-8 text-center">
-                <FiUserPlus size={32} className="text-dark-600 mx-auto mb-3" />
-                <p className="text-dark-400">Aún no tienes contactos. Busca personas para añadir.</p>
+              <div className="card p-12 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-dark-800/60 flex items-center justify-center mx-auto mb-4">
+                  <FiUserPlus size={24} className="text-dark-500" />
+                </div>
+                <p className="text-dark-300 font-medium mb-1">Sin contactos aún</p>
+                <p className="text-dark-500 text-sm">Busca personas o explora sugerencias para añadir contactos</p>
               </div>
             ) : (
-              <div className="grid sm:grid-cols-2 gap-3">
+              <motion.div variants={containerVariants} initial="hidden" animate="show" className="grid sm:grid-cols-2 gap-3">
                 {contacts.map((c) => {
                   const online = isOnline(c.lastSeen);
                   return (
-                    <motion.div key={c.contactId || c.id} className="card p-4 flex items-center justify-between" whileHover={{ scale: 1.01 }}>
-                      <Link href={`/estudiantes/${c.id}`} className="flex items-center gap-3 group flex-1 min-w-0">
-                        <ProfilePopup userId={c.id}>
-                          <div className="relative flex-shrink-0 cursor-pointer">
-                            <div className="w-10 h-10 rounded-full overflow-hidden">
-                              {c.image ? (
-                                <img src={c.image} alt="" className="w-full h-full object-cover" />
+                    <motion.div key={c.contactId || c.id} variants={itemVariants} className="card p-4 group">
+                      <div className="flex items-center justify-between">
+                        <Link href={`/estudiantes/${c.id}`} className="flex items-center gap-3 flex-1 min-w-0">
+                          <ProfilePopup userId={c.id}>
+                            <div className="relative flex-shrink-0 cursor-pointer">
+                              <div className="w-11 h-11 rounded-full overflow-hidden ring-2 ring-dark-700/50 group-hover:ring-brand-500/30 transition-all">
+                                {c.image ? (
+                                  <img src={c.image} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="avatar-placeholder">
+                                    <span className="text-sm font-semibold text-brand-400">{getInitials(c.name, c.email)}</span>
+                                  </div>
+                                )}
+                              </div>
+                              <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-dark-900 ${online ? 'bg-emerald-400' : 'bg-dark-600'}`} />
+                            </div>
+                          </ProfilePopup>
+                          <div className="min-w-0">
+                            <span className="text-sm font-medium text-white block truncate group-hover:text-brand-400 transition-colors">{c.name || 'Sin nombre'}</span>
+                            <div className="flex items-center gap-1.5 text-xs text-dark-500">
+                              {online ? (
+                                <span className="flex items-center gap-1 text-emerald-400">
+                                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
+                                  En línea
+                                </span>
                               ) : (
-                                <div className="w-full h-full bg-gradient-to-br from-brand-500/20 to-accent-500/20 flex items-center justify-center">
-                                  <FiUser size={14} className="text-brand-400" />
-                                </div>
+                                <span className="flex items-center gap-1">
+                                  <FiClock size={10} /> {formatLastSeen(c.lastSeen)}
+                                </span>
                               )}
                             </div>
-                            <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-dark-900 ${online ? 'bg-emerald-400' : 'bg-dark-600'}`} />
                           </div>
-                        </ProfilePopup>
-                        <div className="min-w-0">
-                          <span className="text-sm text-white block truncate group-hover:text-brand-400 transition-colors">{c.name || 'Sin nombre'}</span>
-                          <div className="flex items-center gap-1 text-xs text-dark-500">
-                            {online ? (
-                              <span className="text-emerald-400">En línea</span>
-                            ) : (
-                              <span className="flex items-center gap-0.5">
-                                <FiClock size={8} /> {formatLastSeen(c.lastSeen)}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </Link>
-                      <div className="flex items-center gap-1 ml-2 flex-shrink-0">
-                        <Link href={`/chat?contactId=${c.id}`} className="p-2 text-dark-500 hover:text-brand-400 transition-colors" title="Enviar mensaje">
-                          <FiMessageSquare size={14} />
                         </Link>
-                        <button
-                          onClick={() => setBlockTarget({ id: c.id, name: c.name || c.email })}
-                          className="p-2 text-dark-500 hover:text-yellow-400 transition-colors"
-                          title="Bloquear contacto"
-                        >
-                          <FiShieldOff size={14} />
-                        </button>
-                        <button onClick={() => removeContact(c.contactId || c.id)} className="p-2 text-dark-500 hover:text-red-400 transition-colors" title="Eliminar contacto">
-                          <FiX size={14} />
-                        </button>
+                        <div className="flex items-center gap-0.5 ml-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Link href={`/chat?contactId=${c.id}`} className="p-2 text-dark-500 hover:text-brand-400 hover:bg-brand-500/10 rounded-lg transition-all" title="Enviar mensaje">
+                            <FiMessageSquare size={14} />
+                          </Link>
+                          <button
+                            onClick={() => setBlockTarget({ id: c.id, name: c.name || c.email })}
+                            className="p-2 text-dark-500 hover:text-yellow-400 hover:bg-yellow-500/10 rounded-lg transition-all"
+                            title="Bloquear contacto"
+                          >
+                            <FiShieldOff size={14} />
+                          </button>
+                          <button onClick={() => removeContact(c.contactId || c.id)} className="p-2 text-dark-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all" title="Eliminar contacto">
+                            <FiX size={14} />
+                          </button>
+                        </div>
                       </div>
                     </motion.div>
                   );
                 })}
-              </div>
+              </motion.div>
             )}
           </div>
 
@@ -447,16 +516,17 @@ export default function ContactosPage() {
             <div>
               <button
                 onClick={() => setShowBlocked(!showBlocked)}
-                className="text-sm text-dark-500 hover:text-dark-300 transition-colors flex items-center gap-1.5 mb-3"
+                className="flex items-center gap-2 text-sm text-dark-500 hover:text-dark-300 transition-colors mb-3"
               >
-                <FiShield size={14} /> Contactos bloqueados ({blocked.length})
-                <span className="text-[10px]">{showBlocked ? '▲' : '▼'}</span>
+                <FiShield size={14} />
+                <span>Contactos bloqueados ({blocked.length})</span>
+                <span className="text-[10px] transition-transform" style={{ transform: showBlocked ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
               </button>
               <AnimatePresence>
                 {showBlocked && (
                   <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-2 overflow-hidden">
                     {blocked.map((b) => (
-                      <div key={b.id} className="card p-3 flex items-center justify-between opacity-60">
+                      <div key={b.id} className="card p-3 flex items-center justify-between opacity-60 hover:opacity-80 transition-opacity">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 bg-dark-800 rounded-full flex items-center justify-center">
                             <FiShield size={14} className="text-red-400" />
@@ -482,7 +552,6 @@ export default function ContactosPage() {
         </motion.div>
       </div>
 
-      {/* Block confirmation modal */}
       <DeleteConfirmModal
         open={!!blockTarget}
         title="Bloquear contacto"
@@ -492,7 +561,6 @@ export default function ContactosPage() {
         loading={blockLoading}
       />
 
-      {/* Unblock confirmation modal */}
       <DeleteConfirmModal
         open={!!unblockTarget}
         title="Desbloquear contacto"
