@@ -135,8 +135,8 @@ export default function StudentProfilePage() {
     return (
       <div className="py-12 section">
         <div className="animate-pulse space-y-4">
-          <div className="h-32 bg-dark-800 rounded-2xl" />
-          <div className="h-48 bg-dark-800 rounded-2xl" />
+          <div className="h-32 skeleton rounded-2xl" />
+          <div className="h-48 skeleton rounded-2xl" />
         </div>
       </div>
     );

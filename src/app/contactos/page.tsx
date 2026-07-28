@@ -225,10 +225,10 @@ export default function ContactosPage() {
     return (
       <div className="py-12 section">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-dark-800 rounded w-1/3" />
-          <div className="h-12 bg-dark-800 rounded-xl" />
+          <div className="h-8 skeleton w-1/3" />
+          <div className="h-12 skeleton rounded-xl" />
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => <div key={i} className="h-24 bg-dark-800 rounded-xl" />)}
+            {[1, 2, 3].map((i) => <div key={i} className="h-24 skeleton rounded-xl" />)}
           </div>
         </div>
       </div>
@@ -239,7 +239,7 @@ export default function ContactosPage() {
     <div className="py-12">
       <div className="section max-w-4xl">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <h1 className="text-3xl font-bold text-white mb-6">Contactos</h1>
+          <h1 className="page-title">Contactos</h1>
 
           {/* Search */}
           <div className="card p-4 mb-6">

@@ -92,11 +92,11 @@ export default function AdminReportsPage() {
     return (
       <div className="py-12 section">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-dark-800 rounded w-1/4" />
+          <div className="h-8 skeleton w-1/4" />
           {[1, 2, 3].map((i) => (
             <div key={i} className="card p-4 space-y-3">
-              <div className="h-4 bg-dark-800 rounded w-3/4" />
-              <div className="h-3 bg-dark-800 rounded w-1/2" />
+              <div className="h-4 skeleton rounded w-3/4" />
+              <div className="h-3 skeleton rounded w-1/2" />
             </div>
           ))}
         </div>

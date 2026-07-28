@@ -63,7 +63,7 @@ export default function NewCoursePage() {
           <FiArrowLeft size={14} /> Volver a cursos
         </Link>
 
-        <h1 className="text-3xl font-bold text-white mb-2">Nuevo Curso</h1>
+        <h1 className="page-title">Nuevo Curso</h1>
         <p className="text-dark-400 mb-8 flex items-center gap-2">
           <FiStar size={14} className="text-emerald-400" />
           Todos los cursos son 100% gratuitos

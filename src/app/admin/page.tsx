@@ -77,10 +77,10 @@ export default function AdminPage() {
     return (
       <div className="py-12 section">
         <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-dark-800 rounded w-1/4" />
+          <div className="h-8 skeleton w-1/4" />
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="h-28 bg-dark-800 rounded-2xl" />
+              <div key={i} className="h-28 skeleton rounded-2xl" />
             ))}
           </div>
         </div>
@@ -104,48 +104,45 @@ export default function AdminPage() {
       <div className="section">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-1">Panel de Admin</h1>
-            <p className="text-dark-400">Gestiona cursos, lecciones, usuarios y más.</p>
+            <h1 className="page-title">Panel de Admin</h1>
+            <p className="page-subtitle">Gestiona cursos, lecciones, usuarios y más.</p>
           </div>
-          <div className="flex gap-2">
-            <Link href="/admin/courses/new" className="btn-primary flex items-center gap-2 text-sm">
-              + Nuevo Curso
-            </Link>
-          </div>
+          <Link href="/admin/courses/new" className="btn-primary flex items-center gap-2 text-sm">
+            + Nuevo Curso
+          </Link>
         </div>
 
+        {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
           {statCards.map((s, i) => (
             <motion.div
               key={s.label}
-              className="card p-5"
-              initial={{ opacity: 0, y: 20 }}
+              className="stat-card"
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
+              transition={{ delay: i * 0.04 }}
             >
-              <div className="flex items-center gap-3 mb-3">
-                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${s.color} flex items-center justify-center text-white shadow-lg`}>
-                  <s.icon size={18} />
-                </div>
+              <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${s.color} flex items-center justify-center text-white shadow-lg mb-1`}>
+                <s.icon size={16} />
               </div>
-              <div className="text-2xl font-bold text-white">{s.value}</div>
-              <div className="text-sm text-dark-400">{s.label}</div>
+              <div className="stat-value">{s.value}</div>
+              <div className="stat-label">{s.label}</div>
             </motion.div>
           ))}
         </div>
 
-        {/* Analytics: Enrollment per Course */}
+        {/* Enrollment bar chart */}
         {courseStats.length > 0 && (
           <div className="card p-6 mb-8">
             <div className="flex items-center gap-2 mb-4">
-              <FiTrendingUp size={16} className="text-brand-400" />
-              <h2 className="text-white font-semibold">Inscripciones por Curso</h2>
+              <FiTrendingUp size={15} className="text-brand-400" />
+              <h2 className="text-white font-semibold text-sm">Inscripciones por Curso</h2>
             </div>
             <div className="space-y-3">
               {courseStats.map((cs) => (
                 <div key={cs.title} className="flex items-center gap-4">
                   <span className="text-sm text-dark-300 w-48 truncate">{cs.title}</span>
-                  <div className="flex-1 h-6 bg-dark-800 rounded-full overflow-hidden">
+                  <div className="flex-1 h-5 bg-dark-800/50 rounded-full overflow-hidden">
                     <motion.div
                       className="h-full bg-gradient-to-r from-brand-500 to-accent-500 rounded-full"
                       initial={{ width: 0 }}
@@ -153,30 +150,31 @@ export default function AdminPage() {
                       transition={{ duration: 0.8, ease: 'easeOut' }}
                     />
                   </div>
-                  <span className="text-sm text-dark-400 w-10 text-right">{cs.enrollmentCount}</span>
+                  <span className="text-sm text-dark-400 w-10 text-right font-medium">{cs.enrollmentCount}</span>
                 </div>
               ))}
             </div>
           </div>
         )}
 
+        {/* Recent users & enrollments */}
         <div className="grid lg:grid-cols-2 gap-6 mb-8">
           <div className="card">
-            <div className="p-5 border-b border-dark-800/50">
-              <h2 className="text-white font-semibold">Usuarios Recientes</h2>
+            <div className="p-5 border-b border-dark-800/40">
+              <h2 className="text-white font-semibold text-sm">Usuarios Recientes</h2>
             </div>
-            <div className="divide-y divide-dark-800/50">
+            <div className="divide-y divide-dark-800/30">
               {recentUsers.length > 0 ? (
                 recentUsers.map((user) => (
-                  <div key={user.id} className="px-5 py-3 flex items-center justify-between">
+                  <div key={user.id} className="px-5 py-3 flex items-center justify-between hover:bg-dark-800/20 transition-colors">
                     <div className="min-w-0">
                       <div className="text-sm text-white truncate">{user.name || 'Sin nombre'}</div>
                       <div className="text-xs text-dark-500 truncate">{user.email}</div>
                     </div>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                    <span className={`badge text-[10px] ${
                       user.role === 'ADMIN'
-                        ? 'bg-brand-600/15 text-brand-400 border border-brand-500/25'
-                        : 'bg-dark-800 text-dark-400 border border-dark-700/50'
+                        ? 'badge-blue'
+                        : 'bg-dark-800/50 text-dark-400 border border-dark-700/40'
                     }`}>
                       {user.role}
                     </span>
@@ -189,13 +187,13 @@ export default function AdminPage() {
           </div>
 
           <div className="card">
-            <div className="p-5 border-b border-dark-800/50">
-              <h2 className="text-white font-semibold">Inscripciones Recientes</h2>
+            <div className="p-5 border-b border-dark-800/40">
+              <h2 className="text-white font-semibold text-sm">Inscripciones Recientes</h2>
             </div>
-            <div className="divide-y divide-dark-800/50">
+            <div className="divide-y divide-dark-800/30">
               {recentEnrollments.length > 0 ? (
                 recentEnrollments.map((enrollment) => (
-                  <div key={enrollment.id} className="px-5 py-3 flex items-center justify-between">
+                  <div key={enrollment.id} className="px-5 py-3 flex items-center justify-between hover:bg-dark-800/20 transition-colors">
                     <div className="min-w-0">
                       <div className="text-sm text-white truncate">{enrollment.user.name || enrollment.user.email}</div>
                       <div className="text-xs text-dark-500 truncate">{enrollment.course.title}</div>
@@ -212,6 +210,7 @@ export default function AdminPage() {
           </div>
         </div>
 
+        {/* Quick links */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {[
             { href: '/admin/courses', title: 'Gestionar Cursos', desc: 'Crear, editar, eliminar' },
@@ -224,17 +223,17 @@ export default function AdminPage() {
               key={link.href}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 + i * 0.1 }}
+              transition={{ delay: 0.3 + i * 0.06 }}
             >
-              <Link href={link.href} className="card p-5 hover:border-dark-600 transition-colors flex items-center justify-between group">
+              <Link href={link.href} className="card p-5 hover:border-dark-600/60 transition-all duration-200 flex items-center justify-between group hover:-translate-y-0.5">
                 <div>
-                  <h3 className="text-white font-medium flex items-center gap-2">
-                    {link.icon && <link.icon size={14} className="text-red-400" />}
+                  <h3 className="text-white font-medium text-sm flex items-center gap-2">
+                    {link.icon && <link.icon size={13} className="text-red-400" />}
                     {link.title}
                   </h3>
-                  <p className="text-dark-500 text-sm">{link.desc}</p>
+                  <p className="text-dark-500 text-xs mt-0.5">{link.desc}</p>
                 </div>
-                <FiArrowRight size={18} className="text-dark-500 group-hover:text-brand-400 transition-colors" />
+                <FiArrowRight size={16} className="text-dark-600 group-hover:text-brand-400 transition-colors" />
               </Link>
             </motion.div>
           ))}

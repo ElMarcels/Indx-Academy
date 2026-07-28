@@ -25,11 +25,11 @@ export default function RutasPage() {
     return (
       <div className="py-12 section">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-dark-800 rounded w-1/3" />
-          <div className="h-4 bg-dark-800 rounded w-1/2" />
+          <div className="h-8 skeleton w-1/3" />
+          <div className="h-4 skeleton w-1/2" />
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-32 bg-dark-800 rounded-2xl shimmer" />
+              <div key={i} className="h-32 skeleton rounded-2xl shimmer" />
             ))}
           </div>
         </div>
@@ -49,7 +49,7 @@ export default function RutasPage() {
             <div className="p-2 bg-accent-500/15 rounded-xl">
               <FiLayers size={20} className="text-accent-400" />
             </div>
-            <h1 className="text-3xl font-bold text-white">Rutas de Aprendizaje</h1>
+            <h1 className="page-title">Rutas de Aprendizaje</h1>
           </div>
           <p className="text-dark-400">
             Sigue una ruta guiada para dominar un tema de principio a fin.

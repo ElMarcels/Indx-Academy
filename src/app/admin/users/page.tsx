@@ -49,8 +49,8 @@ export default function AdminUsersPage() {
     return (
       <div className="py-12 section">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-dark-800 rounded w-1/4" />
-          {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-16 bg-dark-800 rounded-xl" />)}
+          <div className="h-8 skeleton w-1/4" />
+          {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-16 skeleton rounded-xl" />)}
         </div>
       </div>
     );
@@ -63,7 +63,7 @@ export default function AdminUsersPage() {
           <FiArrowLeft size={14} /> Volver al admin
         </Link>
 
-        <h1 className="text-3xl font-bold text-white mb-2">Usuarios</h1>
+        <h1 className="page-title">Usuarios</h1>
         <p className="text-dark-400 mb-8">{users.length} usuarios registrados</p>
 
         <div className="card overflow-hidden">

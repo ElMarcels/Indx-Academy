@@ -40,12 +40,12 @@ export default function GlosarioPage() {
     return (
       <div className="py-12 section">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-dark-800 rounded w-1/3" />
-          <div className="h-4 bg-dark-800 rounded w-1/2" />
-          <div className="h-10 bg-dark-800 rounded-xl" />
+          <div className="h-8 skeleton w-1/3" />
+          <div className="h-4 skeleton w-1/2" />
+          <div className="h-10 skeleton rounded-xl" />
           <div className="space-y-3">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="h-20 bg-dark-800 rounded-xl shimmer" />
+              <div key={i} className="h-20 skeleton rounded-xl shimmer" />
             ))}
           </div>
         </div>
@@ -65,7 +65,7 @@ export default function GlosarioPage() {
             <div className="p-2 bg-brand-500/15 rounded-xl">
               <FiBook size={20} className="text-brand-400" />
             </div>
-            <h1 className="text-3xl font-bold text-white">Glosario Técnico</h1>
+            <h1 className="page-title">Glosario Técnico</h1>
           </div>
           <p className="text-dark-400">
             Referencia de términos técnicos utilizados en los cursos.
@@ -78,17 +78,13 @@ export default function GlosarioPage() {
         <div className="flex items-center gap-2 mb-6">
           <button
             onClick={() => setView('glossary')}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-              view === 'glossary' ? 'bg-brand-500/20 text-brand-400' : 'bg-dark-800/50 text-dark-400 hover:text-white'
-            }`}
+            className={view === 'glossary' ? 'tab-btn-active' : 'tab-btn'}
           >
             <FiBook size={14} className="inline mr-1.5" /> Glosario
           </button>
           <button
             onClick={() => setView('flashcards')}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-              view === 'flashcards' ? 'bg-brand-500/20 text-brand-400' : 'bg-dark-800/50 text-dark-400 hover:text-white'
-            }`}
+            className={view === 'flashcards' ? 'tab-btn-active' : 'tab-btn'}
           >
             <FiLayers size={14} className="inline mr-1.5" /> Flashcards
           </button>

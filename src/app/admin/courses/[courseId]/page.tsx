@@ -359,8 +359,8 @@ export default function EditCoursePage() {
     return (
       <div className="py-12 section">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-dark-800 rounded w-1/4" />
-          <div className="h-48 bg-dark-800 rounded-2xl" />
+          <div className="h-8 skeleton w-1/4" />
+          <div className="h-48 skeleton rounded-2xl" />
         </div>
       </div>
     );

@@ -127,11 +127,11 @@ export default function AdminTicketDetailPage() {
     return (
       <div className="py-12 section">
         <div className="max-w-4xl mx-auto animate-pulse space-y-4">
-          <div className="h-4 bg-dark-800 rounded w-1/4" />
+          <div className="h-4 skeleton w-1/4" />
           <div className="grid grid-cols-3 gap-3">
-            {[1, 2, 3].map((i) => <div key={i} className="h-20 bg-dark-800/50 rounded-2xl" />)}
+            {[1, 2, 3].map((i) => <div key={i} className="h-20 skeleton rounded-2xl" />)}
           </div>
-          <div className="h-[500px] bg-dark-800/50 rounded-2xl" />
+          <div className="h-[500px] skeleton rounded-2xl" />
         </div>
       </div>
     );

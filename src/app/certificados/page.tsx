@@ -43,11 +43,11 @@ export default function CertificadosPage() {
     return (
       <div className="py-12 section">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-dark-800 rounded w-1/3" />
-          <div className="h-4 bg-dark-800 rounded w-1/2" />
+          <div className="h-8 skeleton w-1/3" />
+          <div className="h-4 skeleton w-1/2" />
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-48 bg-dark-800 rounded-2xl shimmer" />
+              <div key={i} className="h-48 skeleton rounded-2xl shimmer" />
             ))}
           </div>
         </div>
@@ -67,7 +67,7 @@ export default function CertificadosPage() {
             <div className="p-2 bg-emerald-500/15 rounded-xl">
               <FiAward size={20} className="text-emerald-400" />
             </div>
-            <h1 className="text-3xl font-bold text-white">Mis Certificados</h1>
+            <h1 className="page-title">Mis Certificados</h1>
           </div>
           <p className="text-dark-400">
             Certificados obtenidos al completar cursos.
@@ -81,10 +81,10 @@ export default function CertificadosPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
-            <div className="w-16 h-16 bg-dark-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <FiAward size={28} className="text-dark-500" />
+            <div className="empty-state-icon mx-auto">
+              <FiAward size={24} className="text-dark-500" />
             </div>
-            <h2 className="text-xl font-semibold text-white mb-2">No tienes certificados</h2>
+            <h2 className="text-lg font-semibold text-white mb-2">No tienes certificados</h2>
             <p className="text-dark-400">
               Completa cursos para obtener certificados.
             </p>

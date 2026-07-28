@@ -175,7 +175,7 @@ export default function AdminSupportPage() {
                 <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-accent-500 to-brand-500 flex items-center justify-center mb-4 shadow-lg shadow-accent-500/25">
                   <FiHeadphones size={24} className="text-white" />
                 </div>
-                <h1 className="text-3xl font-bold text-white mb-2">Soporte - Panel Admin</h1>
+                <h1 className="page-title">Soporte - Panel Admin</h1>
                 <p className="text-dark-300 text-sm max-w-md">
                   Gestiona las consultas de los usuarios. Responde y cierra tickets cuando estén resueltos.
                 </p>

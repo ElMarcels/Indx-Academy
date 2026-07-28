@@ -82,13 +82,13 @@ export default function CursosPage() {
   return (
     <div className="py-12">
       <div className="section">
-        <motion.div 
+        <motion.div
           className="mb-8"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <h1 className="text-3xl font-bold text-white mb-2">Cursos</h1>
-          <p className="text-dark-400">
+          <h1 className="page-title">Cursos</h1>
+          <p className="page-subtitle">
             Explora nuestros cursos de programación. Todos 100% gratuitos.
           </p>
         </motion.div>
@@ -111,7 +111,7 @@ export default function CursosPage() {
           {loading ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-80 bg-dark-800 rounded-2xl animate-pulse shimmer" />
+                <div key={i} className="h-80 skeleton rounded-2xl shimmer" />
               ))}
             </div>
           ) : courses.length > 0 ? (
@@ -121,11 +121,11 @@ export default function CursosPage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-20">
-              <div className="w-16 h-16 bg-dark-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <FiBook className="text-dark-500" size={28} />
+            <div className="empty-state">
+              <div className="empty-state-icon">
+                <FiBook className="text-dark-500" size={24} />
               </div>
-              <h2 className="text-xl font-semibold text-white mb-2">No se encontraron cursos</h2>
+              <h2 className="text-lg font-semibold text-white mb-2">No se encontraron cursos</h2>
               <p className="text-dark-400 mb-6">Intenta con otros filtros o términos de búsqueda.</p>
               <button onClick={handleClear} className="btn-primary">
                 Limpiar filtros

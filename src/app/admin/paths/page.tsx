@@ -218,9 +218,9 @@ export default function AdminPathsPage() {
     return (
       <div className="py-12 section">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-dark-800 rounded w-1/4" />
+          <div className="h-8 skeleton w-1/4" />
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-20 bg-dark-800 rounded-2xl shimmer" />
+            <div key={i} className="h-20 skeleton rounded-2xl shimmer" />
           ))}
         </div>
       </div>
@@ -243,7 +243,7 @@ export default function AdminPathsPage() {
 
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-white mb-1">Rutas de Aprendizaje</h1>
+              <h1 className="page-title">Rutas de Aprendizaje</h1>
               <p className="text-dark-400">{paths.length} rutas en total</p>
             </div>
             <button onClick={startCreate} className="btn-primary flex items-center gap-2">
@@ -445,11 +445,11 @@ export default function AdminPathsPage() {
             ))}
 
             {paths.length === 0 && (
-              <div className="text-center py-16">
-                <div className="w-16 h-16 bg-dark-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <FiLayers size={28} className="text-dark-500" />
+              <div className="empty-state">
+                <div className="empty-state-icon">
+                  <FiLayers size={24} className="text-dark-500" />
                 </div>
-                <h2 className="text-xl font-semibold text-white mb-2">No hay rutas creadas</h2>
+                <h2 className="text-lg font-semibold text-white mb-2">No hay rutas creadas</h2>
                 <p className="text-dark-400 mb-6">Crea la primera ruta de aprendizaje.</p>
                 <button onClick={startCreate} className="btn-primary">Crear ruta</button>
               </div>

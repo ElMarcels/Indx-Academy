@@ -85,8 +85,8 @@ export default function AdminCoursesPage() {
     return (
       <div className="py-12 section">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-dark-800 rounded w-1/4" />
-          {[1, 2, 3].map(i => <div key={i} className="h-20 bg-dark-800 rounded-2xl" />)}
+          <div className="h-8 skeleton w-1/4" />
+          {[1, 2, 3].map(i => <div key={i} className="h-20 skeleton rounded-2xl" />)}
         </div>
       </div>
     );
@@ -97,7 +97,7 @@ export default function AdminCoursesPage() {
       <div className="section">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-1">Cursos</h1>
+            <h1 className="page-title">Cursos</h1>
             <p className="text-dark-400">{courses.length} cursos en total</p>
           </div>
           <Link href="/admin/courses/new" className="btn-primary flex items-center gap-2">

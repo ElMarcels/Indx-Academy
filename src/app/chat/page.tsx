@@ -17,7 +17,7 @@ function ChatContent() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <h1 className="text-3xl font-bold text-white mb-6">
+          <h1 className="page-title mb-6">
             {contactId ? 'Chat Privado' : groupId ? 'Chat del Grupo' : 'Chat General'}
           </h1>
           <ChatPanel groupId={groupId || undefined} contactId={contactId || undefined} />
@@ -32,8 +32,8 @@ export default function ChatPage() {
     <Suspense fallback={
       <div className="py-12 section">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-dark-800 rounded w-1/3" />
-          <div className="h-96 bg-dark-800 rounded-2xl" />
+          <div className="h-8 skeleton w-1/3" />
+          <div className="h-96 skeleton rounded-2xl" />
         </div>
       </div>
     }>

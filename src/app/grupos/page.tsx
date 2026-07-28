@@ -342,9 +342,9 @@ export default function GroupsPage() {
     return (
       <div className="py-12 section">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-dark-800 rounded w-1/3" />
+          <div className="h-8 skeleton w-1/3" />
           <div className="grid sm:grid-cols-2 gap-4">
-            {[1, 2].map((i) => <div key={i} className="h-32 bg-dark-800 rounded-xl" />)}
+            {[1, 2].map((i) => <div key={i} className="h-32 skeleton rounded-xl" />)}
           </div>
         </div>
       </div>
@@ -376,7 +376,7 @@ export default function GroupsPage() {
       <div className="section max-w-4xl">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl font-bold text-white">Mis Grupos</h1>
+            <h1 className="page-title">Mis Grupos</h1>
             <button onClick={() => setShowCreate(!showCreate)} className="btn-primary text-sm flex items-center gap-2">
               <FiPlus size={14} /> Crear Grupo
             </button>

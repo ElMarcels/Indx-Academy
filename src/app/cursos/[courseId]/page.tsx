@@ -128,11 +128,11 @@ export default function CursoPage() {
     return (
       <div className="py-12 section">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-dark-800 rounded w-1/3" />
-          <div className="h-4 bg-dark-800 rounded w-2/3" />
+          <div className="h-8 skeleton w-1/3" />
+          <div className="h-4 skeleton w-2/3" />
           <div className="grid md:grid-cols-3 gap-6 mt-8">
-            <div className="md:col-span-2 h-96 bg-dark-800 rounded-2xl" />
-            <div className="h-96 bg-dark-800 rounded-2xl" />
+            <div className="md:col-span-2 h-96 skeleton rounded-2xl" />
+            <div className="h-96 skeleton rounded-2xl" />
           </div>
         </div>
       </div>

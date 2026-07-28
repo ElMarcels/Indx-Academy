@@ -234,9 +234,9 @@ export default function LessonPage() {
     return (
       <div className="py-8 section">
         <div className="animate-pulse space-y-4">
-          <div className="h-6 bg-dark-800 rounded w-1/3" />
-          <div className="h-10 bg-dark-800 rounded w-2/3" />
-          <div className="h-64 bg-dark-800 rounded-xl" />
+          <div className="h-6 skeleton w-1/3" />
+          <div className="h-10 skeleton w-2/3" />
+          <div className="h-64 skeleton rounded-xl" />
         </div>
       </div>
     );
