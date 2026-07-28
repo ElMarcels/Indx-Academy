@@ -9,6 +9,7 @@ import remarkGfm from 'remark-gfm';
 import {
   FiMessageSquare, FiX, FiSend, FiLoader, FiPlus, FiChevronDown, FiTrash2, FiBook,
   FiShield, FiFileText, FiHelpCircle, FiCode, FiTarget, FiLayers, FiBookOpen, FiGrid,
+  FiUsers, FiArrowLeft, FiCheck,
 } from 'react-icons/fi';
 
 interface AIMessage {
@@ -69,6 +70,7 @@ export function IndxAI() {
   const { data: session } = useSession();
   const isAdmin = (session?.user as any)?.role === 'ADMIN';
   const [isOpen, setIsOpen] = useState(false);
+  const [selectedOption, setSelectedOption] = useState<'menu' | 'staff' | 'ia'>('menu');
   const [conversations, setConversations] = useState<AIConversation[]>([]);
   const [activeConversation, setActiveConversation] = useState<string | null>(null);
   const [messages, setMessages] = useState<AIMessage[]>([]);
@@ -92,16 +94,22 @@ export function IndxAI() {
   const [generatedContent, setGeneratedContent] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
 
+  // Staff contact state
+  const [contactSubject, setContactSubject] = useState('');
+  const [contactMessage, setContactMessage] = useState('');
+  const [sendingContact, setSendingContact] = useState(false);
+  const [contactSent, setContactSent] = useState(false);
+
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
   useEffect(() => {
-    if (isOpen && session) {
+    if (isOpen && selectedOption === 'ia' && session) {
       loadConversations();
       loadCourses();
     }
-  }, [isOpen, session]);
+  }, [isOpen, selectedOption, session]);
 
   useEffect(() => {
     scrollToBottom();
@@ -301,12 +309,45 @@ export function IndxAI() {
     } catch { /* silent */ }
   }
 
+  async function sendContactMessage() {
+    if (!contactSubject.trim() || !contactMessage.trim() || sendingContact) return;
+    setSendingContact(true);
+    try {
+      const res = await fetch('/api/staff/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subject: contactSubject, message: contactMessage }),
+      });
+      if (res.ok) {
+        setContactSent(true);
+        setContactSubject('');
+        setContactMessage('');
+        toast.success('Mensaje enviado al staff');
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Error al enviar el mensaje');
+      }
+    } catch {
+      toast.error('Error de conexión');
+    } finally {
+      setSendingContact(false);
+    }
+  }
+
   if (!session) return null;
 
   return (
     <>
       <motion.button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          if (isOpen) {
+            setIsOpen(false);
+            setSelectedOption('menu');
+          } else {
+            setIsOpen(true);
+            setSelectedOption('menu');
+          }
+        }}
         className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-brand-500 to-accent-500 text-white shadow-lg shadow-brand-500/25 flex items-center justify-center hover:shadow-brand-500/40 transition-shadow"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
@@ -316,7 +357,67 @@ export function IndxAI() {
       </motion.button>
 
       <AnimatePresence>
-        {isOpen && (
+        {isOpen && selectedOption === 'menu' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="fixed bottom-24 right-6 z-50 w-[320px] max-w-[calc(100vw-3rem)] bg-dark-900 border border-dark-800/50 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+          >
+            <div className="p-4 border-b border-dark-800/50">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500/20 to-accent-500/20 border border-brand-500/20 flex items-center justify-center">
+                  <FiMessageSquare size={16} className="text-brand-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-semibold text-white">Menú</h3>
+                  <p className="text-[10px] text-dark-500">Selecciona una opción</p>
+                </div>
+                <button
+                  onClick={() => { setIsOpen(false); setSelectedOption('menu'); }}
+                  className="p-1.5 rounded-lg text-dark-400 hover:text-white hover:bg-dark-800/50 transition-colors"
+                >
+                  <FiX size={14} />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-3 space-y-2">
+              <button
+                onClick={() => setSelectedOption('staff')}
+                className="w-full text-left px-4 py-3 rounded-xl bg-dark-800/50 border border-dark-700/50 hover:border-brand-500/30 hover:bg-dark-800 transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500/20 to-blue-500/20 border border-brand-500/20 flex items-center justify-center flex-shrink-0 group-hover:border-brand-500/40 transition-colors">
+                    <FiUsers size={18} className="text-brand-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-white group-hover:text-brand-400 transition-colors">Contacto con el Staff</p>
+                    <p className="text-[10px] text-dark-500">Envía un mensaje al equipo de la plataforma</p>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setSelectedOption('ia')}
+                className="w-full text-left px-4 py-3 rounded-xl bg-dark-800/50 border border-dark-700/50 hover:border-accent-500/30 hover:bg-dark-800 transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent-500/20 to-purple-500/20 border border-accent-500/20 flex items-center justify-center flex-shrink-0 group-hover:border-accent-500/40 transition-colors">
+                    <FiMessageSquare size={18} className="text-accent-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-white group-hover:text-accent-400 transition-colors">IndxAI</p>
+                    <p className="text-[10px] text-dark-500">Asistente de IA potenciado por Gemma 4</p>
+                  </div>
+                </div>
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {isOpen && selectedOption === 'staff' && (
           <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -327,6 +428,109 @@ export function IndxAI() {
           >
             {/* Header */}
             <div className="p-4 border-b border-dark-800/50 flex items-center gap-3">
+              <button
+                onClick={() => setSelectedOption('menu')}
+                className="p-1.5 rounded-lg text-dark-400 hover:text-white hover:bg-dark-800/50 transition-colors"
+              >
+                <FiArrowLeft size={14} />
+              </button>
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500/20 to-blue-500/20 border border-brand-500/20 flex items-center justify-center">
+                <FiUsers size={16} className="text-brand-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-semibold text-white">Contacto con el Staff</h3>
+                <p className="text-[10px] text-dark-500">Envía tu consulta al equipo</p>
+              </div>
+              <button
+                onClick={() => { setIsOpen(false); setSelectedOption('menu'); }}
+                className="p-1.5 rounded-lg text-dark-400 hover:text-white hover:bg-dark-800/50 transition-colors"
+              >
+                <FiX size={14} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-4">
+              {contactSent ? (
+                <div className="text-center py-12">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/10 flex items-center justify-center mx-auto mb-4">
+                    <FiCheck size={24} className="text-green-400" />
+                  </div>
+                  <p className="text-white text-sm font-medium mb-1">¡Mensaje enviado!</p>
+                  <p className="text-dark-500 text-xs mb-6">El staff de la plataforma recibió tu mensaje y te responderá pronto.</p>
+                  <button
+                    onClick={() => { setContactSent(false); setContactSubject(''); setContactMessage(''); }}
+                    className="text-xs text-brand-400 hover:text-brand-300 transition-colors"
+                  >
+                    Enviar otro mensaje
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-[11px] text-dark-400 font-medium mb-1.5">Asunto</label>
+                    <input
+                      type="text"
+                      value={contactSubject}
+                      onChange={(e) => setContactSubject(e.target.value)}
+                      placeholder="Ej: Problema con mi certificado"
+                      maxLength={200}
+                      className="w-full bg-dark-800/50 border border-dark-700/50 rounded-xl px-3 py-2 text-sm text-white placeholder-dark-500 focus:outline-none focus:border-brand-500/50"
+                    />
+                    <p className="text-[9px] text-dark-600 mt-1 text-right">{contactSubject.length}/200</p>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] text-dark-400 font-medium mb-1.5">Mensaje</label>
+                    <textarea
+                      value={contactMessage}
+                      onChange={(e) => setContactMessage(e.target.value)}
+                      placeholder="Describe tu consulta o problema detalladamente..."
+                      maxLength={5000}
+                      rows={8}
+                      className="w-full bg-dark-800/50 border border-dark-700/50 rounded-xl px-3 py-2 text-sm text-white placeholder-dark-500 focus:outline-none focus:border-brand-500/50 resize-none"
+                    />
+                    <p className="text-[9px] text-dark-600 mt-1 text-right">{contactMessage.length}/5000</p>
+                  </div>
+                  <button
+                    onClick={sendContactMessage}
+                    disabled={!contactSubject.trim() || !contactMessage.trim() || sendingContact}
+                    className="w-full py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium disabled:opacity-30 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                  >
+                    {sendingContact ? (
+                      <>
+                        <FiLoader size={14} className="animate-spin" />
+                        Enviando...
+                      </>
+                    ) : (
+                      <>
+                        <FiSend size={14} />
+                        Enviar mensaje
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {isOpen && selectedOption === 'ia' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="fixed bottom-24 right-6 z-50 w-[420px] max-w-[calc(100vw-3rem)] bg-dark-900 border border-dark-800/50 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+            style={{ height: '580px' }}
+          >
+            {/* Header */}
+            <div className="p-4 border-b border-dark-800/50 flex items-center gap-3">
+              <button
+                onClick={() => setSelectedOption('menu')}
+                className="p-1.5 rounded-lg text-dark-400 hover:text-white hover:bg-dark-800/50 transition-colors"
+              >
+                <FiArrowLeft size={14} />
+              </button>
               <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
                 adminMode
                   ? 'bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/20'
@@ -371,7 +575,7 @@ export function IndxAI() {
                 {showConversations ? <FiChevronDown size={14} /> : <FiPlus size={14} />}
               </button>
               <button
-                onClick={() => setIsOpen(false)}
+                onClick={() => { setIsOpen(false); setSelectedOption('menu'); }}
                 className="p-1.5 rounded-lg text-dark-400 hover:text-white hover:bg-dark-800/50 transition-colors"
               >
                 <FiX size={14} />
