@@ -77,6 +77,10 @@ export function Navbar() {
                   Rutas
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-brand-500 to-accent-500 group-hover:w-full transition-all duration-300" />
                 </Link>
+                <Link href="/soporte" className="text-dark-300 hover:text-white transition-colors text-sm font-medium relative group">
+                  Soporte
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-brand-500 to-accent-500 group-hover:w-full transition-all duration-300" />
+                </Link>
               </>
             )}
 
@@ -152,6 +156,9 @@ export function Navbar() {
                     </Link>
                     <Link href="/rutas" className="block text-dark-300 hover:text-white py-2 text-sm" onClick={() => setMobileOpen(false)}>
                       Rutas
+                    </Link>
+                    <Link href="/soporte" className="block text-dark-300 hover:text-white py-2 text-sm" onClick={() => setMobileOpen(false)}>
+                      Soporte
                     </Link>
                     <div className="py-2">
                       <Notifications />

@@ -419,6 +419,30 @@ export interface CourseTeacher {
   user: { id: string; name: string | null; email: string | null; image: string | null };
 }
 
+// ─── Support Ticket Types ──────────────────────────────
+export interface SupportTicket {
+  id: string;
+  subject: string;
+  status: string;
+  priority: string;
+  createdAt: string;
+  updatedAt: string;
+  user: { id: string; name: string | null; email: string; image: string | null };
+  _count?: { messages: number };
+}
+
+export interface SupportTicketMessage {
+  id: string;
+  content: string;
+  senderId: string;
+  createdAt: string;
+  sender: { id: string; name: string | null; email: string; image: string | null; role: string };
+}
+
+export interface SupportTicketDetail extends SupportTicket {
+  messages: SupportTicketMessage[];
+}
+
 // ─── AI Assistant Types ─────────────────────────────────
 export interface AIConversation {
   id: string;

@@ -218,7 +218,7 @@ export default function AdminPage() {
             { href: '/admin/courses/new', title: 'Nuevo Curso', desc: 'Añadir curso al catálogo' },
             { href: '/admin/users', title: 'Usuarios', desc: 'Ver todos los usuarios' },
             { href: '/admin/reports', title: 'Moderación', desc: 'Reportes pendientes', icon: FiFlag },
-            { href: '/admin/staff-messages', title: 'Mensajes al Staff', desc: 'Consultas de usuarios', icon: FiMail },
+            { href: '/admin/support', title: 'Soporte', desc: 'Tickets de usuarios', icon: FiMail },
           ].map((link, i) => (
             <motion.div
               key={link.href}
