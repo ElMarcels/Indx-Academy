@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
-  FiUsers, FiBook, FiBarChart2, FiArrowRight, FiClock, FiAward, FiMessageSquare, FiTrendingUp, FiFlag,
+  FiUsers, FiBook, FiBarChart2, FiArrowRight, FiClock, FiAward, FiMessageSquare, FiTrendingUp, FiFlag, FiMail,
 } from 'react-icons/fi';
 
 interface Stats {
@@ -212,12 +212,13 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {[
             { href: '/admin/courses', title: 'Gestionar Cursos', desc: 'Crear, editar, eliminar' },
             { href: '/admin/courses/new', title: 'Nuevo Curso', desc: 'Añadir curso al catálogo' },
             { href: '/admin/users', title: 'Usuarios', desc: 'Ver todos los usuarios' },
             { href: '/admin/reports', title: 'Moderación', desc: 'Reportes pendientes', icon: FiFlag },
+            { href: '/admin/staff-messages', title: 'Mensajes al Staff', desc: 'Consultas de usuarios', icon: FiMail },
           ].map((link, i) => (
             <motion.div
               key={link.href}
