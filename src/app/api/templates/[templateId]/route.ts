@@ -1,23 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { getCurrentUser, isCourseEditor, getCourseIdForTemplate } from '@/lib/permissions';
 
 export async function DELETE(
   req: NextRequest,
   { params }: { params: { templateId: string } }
 ) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-  }
-
-  const user = await prisma.user.findUnique({ where: { email: session.user.email } });
-  if (!user || user.role !== 'ADMIN') {
+  const user = await getCurrentUser();
+  if (!user) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
 
   try {
+    const courseId = await getCourseIdForTemplate(params.templateId);
+    if (!courseId || !(await isCourseEditor(user.id, courseId))) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
     const template = await prisma.courseTemplate.findUnique({
       where: { id: params.templateId },
     });

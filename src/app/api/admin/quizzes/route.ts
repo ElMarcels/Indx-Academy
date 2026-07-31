@@ -1,16 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import {
+  getCurrentUser,
+  isCourseEditor,
+  getCourseIdForModule,
+  getCourseIdForQuiz,
+} from '@/lib/permissions';
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if ((session?.user as any)?.role !== 'ADMIN') {
+  const user = await getCurrentUser();
+  if (!user) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
 
   try {
     const { moduleId, title, description, questions } = await req.json();
+
+    const courseId = await getCourseIdForModule(moduleId);
+    if (!courseId || !(await isCourseEditor(user.id, courseId))) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
 
     const quiz = await prisma.quiz.create({
       data: {
@@ -37,13 +46,18 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if ((session?.user as any)?.role !== 'ADMIN') {
+  const user = await getCurrentUser();
+  if (!user) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
 
   try {
     const { quizId, title, description, questions } = await req.json();
+
+    const courseId = await getCourseIdForQuiz(quizId);
+    if (!courseId || !(await isCourseEditor(user.id, courseId))) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
 
     await prisma.quizQuestion.deleteMany({ where: { quizId } });
 
@@ -72,8 +86,8 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if ((session?.user as any)?.role !== 'ADMIN') {
+  const user = await getCurrentUser();
+  if (!user) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
 
@@ -81,6 +95,11 @@ export async function DELETE(req: NextRequest) {
     const { quizId } = await req.json();
     if (!quizId) {
       return NextResponse.json({ error: 'quizId requerido' }, { status: 400 });
+    }
+
+    const courseId = await getCourseIdForQuiz(quizId);
+    if (!courseId || !(await isCourseEditor(user.id, courseId))) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
     await prisma.quizQuestion.deleteMany({ where: { quizId } });

@@ -114,16 +114,20 @@ export default function EditCoursePage() {
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [editingChallenge, setEditingChallenge] = useState<string | null>(null);
 
+  const isAdmin = (session?.user as any)?.role === 'ADMIN';
+
   useEffect(() => {
-    if (status === 'authenticated' && (session?.user as any)?.role !== 'ADMIN') {
-      router.push('/dashboard');
-    }
-  }, [status, session, router]);
+    if (status === 'unauthenticated') router.push('/login');
+  }, [status, router]);
 
   useEffect(() => {
     async function load() {
       try {
         const res = await fetch(`/api/admin/courses/${params.courseId}`);
+        if (res.status === 401) {
+          router.push('/dashboard');
+          return;
+        }
         if (res.ok) {
           const data = await res.json();
           setCourse(data);
@@ -162,7 +166,7 @@ export default function EditCoursePage() {
       }
     }
     if (status === 'authenticated') load();
-  }, [params.courseId, status]);
+  }, [params.courseId, status, router]);
 
   async function addModule() {
     if (!moduleTitle.trim()) return;
@@ -468,16 +472,18 @@ export default function EditCoursePage() {
           >
             Desafíos
           </button>
-          <button
-            onClick={() => setActiveTab('teachers')}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-              activeTab === 'teachers'
-                ? 'bg-brand-600 text-white'
-                : 'text-dark-400 hover:text-white bg-dark-800/50'
-            }`}
-          >
-            Profesores
-          </button>
+          {isAdmin && (
+            <button
+              onClick={() => setActiveTab('teachers')}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                activeTab === 'teachers'
+                  ? 'bg-brand-600 text-white'
+                  : 'text-dark-400 hover:text-white bg-dark-800/50'
+              }`}
+            >
+              Profesores
+            </button>
+          )}
           <button
             onClick={() => setActiveTab('flashcards')}
             className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${

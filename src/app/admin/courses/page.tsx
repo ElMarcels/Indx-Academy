@@ -25,12 +25,11 @@ export default function AdminCoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const isAdmin = (session?.user as any)?.role === 'ADMIN';
+
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/login');
-    if (status === 'authenticated' && (session?.user as any)?.role !== 'ADMIN') {
-      router.push('/dashboard');
-    }
-  }, [status, session, router]);
+  }, [status, router]);
 
   useEffect(() => {
     loadCourses();
@@ -39,6 +38,10 @@ export default function AdminCoursesPage() {
   async function loadCourses() {
     try {
       const res = await fetch('/api/admin/courses');
+      if (res.status === 401) {
+        router.push('/dashboard');
+        return;
+      }
       if (res.ok) {
         const data = await res.json();
         setCourses(data);
@@ -97,12 +100,14 @@ export default function AdminCoursesPage() {
       <div className="section">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="page-title">Cursos</h1>
+            <h1 className="page-title">{isAdmin ? 'Cursos' : 'Mis Cursos'}</h1>
             <p className="text-dark-400">{courses.length} cursos en total</p>
           </div>
-          <Link href="/admin/courses/new" className="btn-primary flex items-center gap-2">
-            <FiPlus size={16} /> Nuevo Curso
-          </Link>
+          {isAdmin && (
+            <Link href="/admin/courses/new" className="btn-primary flex items-center gap-2">
+              <FiPlus size={16} /> Nuevo Curso
+            </Link>
+          )}
         </div>
 
         <div className="space-y-3">
@@ -146,12 +151,14 @@ export default function AdminCoursesPage() {
                   >
                     {course.isPublished ? 'Ocultar' : 'Publicar'}
                   </button>
-                  <button
-                    onClick={() => deleteCourse(course.id)}
-                    className="text-xs py-1.5 px-3 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors"
-                  >
-                    <FiTrash2 size={12} />
-                  </button>
+                  {isAdmin && (
+                    <button
+                      onClick={() => deleteCourse(course.id)}
+                      className="text-xs py-1.5 px-3 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors"
+                    >
+                      <FiTrash2 size={12} />
+                    </button>
+                  )}
                 </div>
               </div>
             );
@@ -160,7 +167,11 @@ export default function AdminCoursesPage() {
           {courses.length === 0 && (
             <div className="text-center py-16">
               <p className="text-dark-500 mb-4">No hay cursos creados.</p>
-              <Link href="/admin/courses/new" className="btn-primary">Crear primer curso</Link>
+              {isAdmin ? (
+                <Link href="/admin/courses/new" className="btn-primary">Crear primer curso</Link>
+              ) : (
+                <p className="text-dark-500 text-sm">Aún no eres profesor de ningún curso.</p>
+              )}
             </div>
           )}
         </div>

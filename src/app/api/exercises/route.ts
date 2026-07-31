@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { getCurrentUser, isCourseEditor, getCourseIdForLesson } from '@/lib/permissions';
 
 export async function GET(req: NextRequest) {
   try {
@@ -22,13 +21,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-  }
-
-  const user = await prisma.user.findUnique({ where: { email: session.user.email } });
-  if (!user || user.role !== 'ADMIN') {
+  const user = await getCurrentUser();
+  if (!user) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
 
@@ -37,6 +31,11 @@ export async function POST(req: NextRequest) {
 
     if (!title || !description || !lessonId) {
       return NextResponse.json({ error: 'Título, descripción y lessonId requeridos' }, { status: 400 });
+    }
+
+    const courseId = await getCourseIdForLesson(lessonId);
+    if (!courseId || !(await isCourseEditor(user.id, courseId))) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
     const exercise = await prisma.codeExercise.create({

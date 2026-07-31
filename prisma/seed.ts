@@ -4,6 +4,13 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
+  // Platform setting (cerrar plataforma)
+  await prisma.platformSetting.upsert({
+    where: { key: 'PLATFORM_CLOSED' },
+    update: {},
+    create: { key: 'PLATFORM_CLOSED', value: 'false' },
+  });
+
   // Create admin user
   const adminPassword = await bcrypt.hash('admin123', 12);
   const admin = await prisma.user.upsert({

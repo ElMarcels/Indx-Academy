@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
   FiUsers, FiBook, FiBarChart2, FiArrowRight, FiClock, FiAward, FiMessageSquare, FiTrendingUp, FiFlag, FiMail,
+  FiLock, FiUnlock,
 } from 'react-icons/fi';
 
 interface Stats {
@@ -47,6 +48,8 @@ export default function AdminPage() {
   const [recentEnrollments, setRecentEnrollments] = useState<RecentEnrollment[]>([]);
   const [courseStats, setCourseStats] = useState<CourseStat[]>([]);
   const [loading, setLoading] = useState(true);
+  const [platformClosed, setPlatformClosed] = useState(false);
+  const [togglingPlatform, setTogglingPlatform] = useState(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/login');
@@ -66,12 +69,34 @@ export default function AdminPage() {
           setRecentEnrollments(data.recentEnrollments);
           setCourseStats(data.courseStats || []);
         }
+        const platformRes = await fetch('/api/admin/platform');
+        if (platformRes.ok) {
+          const platformData = await platformRes.json();
+          setPlatformClosed(!!platformData.closed);
+        }
       } catch { /* silent */ } finally {
         setLoading(false);
       }
     }
     if (status === 'authenticated') load();
   }, [status]);
+
+  async function togglePlatform() {
+    setTogglingPlatform(true);
+    try {
+      const res = await fetch('/api/admin/platform', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ closed: !platformClosed }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPlatformClosed(!!data.closed);
+      }
+    } catch { /* silent */ } finally {
+      setTogglingPlatform(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -129,6 +154,44 @@ export default function AdminPage() {
               <div className="stat-label">{s.label}</div>
             </motion.div>
           ))}
+        </div>
+
+        {/* Platform status */}
+        <div className="card p-5 mb-8 flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${platformClosed ? 'bg-red-500/15' : 'bg-emerald-500/15'}`}>
+            {platformClosed ? <FiLock size={18} className="text-red-400" /> : <FiUnlock size={18} className="text-emerald-400" />}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-white font-semibold text-sm flex items-center gap-2">
+              Estado de la Plataforma
+              <span className={`badge text-[10px] ${platformClosed ? 'badge-red' : 'badge-green'}`}>
+                {platformClosed ? 'Cerrada' : 'Abierta'}
+              </span>
+            </h2>
+            <p className="text-dark-500 text-xs mt-0.5">
+              {platformClosed
+                ? 'La plataforma está cerrada. Solo los administradores pueden acceder.'
+                : 'La plataforma está abierta. Todos los usuarios pueden acceder.'}
+            </p>
+          </div>
+          <button
+            onClick={togglePlatform}
+            disabled={togglingPlatform}
+            className={`text-sm py-2 px-4 rounded-xl font-medium transition-all duration-200 disabled:opacity-50 flex items-center gap-2 flex-shrink-0 ${
+              platformClosed
+                ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                : 'bg-red-600 hover:bg-red-500 text-white'
+            }`}
+          >
+            {togglingPlatform ? (
+              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : platformClosed ? (
+              <FiUnlock size={14} />
+            ) : (
+              <FiLock size={14} />
+            )}
+            {platformClosed ? 'Abrir Plataforma' : 'Cerrar Plataforma'}
+          </button>
         </div>
 
         {/* Enrollment bar chart */}

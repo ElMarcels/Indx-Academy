@@ -6,6 +6,7 @@ import { Footer } from '@/components/Footer';
 import { Providers } from '@/components/Providers';
 import { OnboardingTour } from '@/components/OnboardingTour';
 import { IndxAI } from '@/components/AIAssistant';
+import { PlatformGate } from '@/components/PlatformGate';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -27,11 +28,13 @@ export default function RootLayout({
       <body className={inter.className}>
         <Providers>
           <div className="min-h-screen flex flex-col">
-            <Navbar />
-            <main className="flex-1">{children}</main>
-            <Footer />
-            <OnboardingTour />
-            <IndxAI />
+            <PlatformGate>
+              <Navbar />
+              <main className="flex-1">{children}</main>
+              <Footer />
+              <OnboardingTour />
+              <IndxAI />
+            </PlatformGate>
           </div>
         </Providers>
       </body>

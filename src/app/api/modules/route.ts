@@ -2,17 +2,23 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { getCurrentUser, isCourseEditor, getCourseIdForModule } from '@/lib/permissions';
 
 export async function PUT(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== 'ADMIN') {
+    const user = await getCurrentUser();
+    if (!user) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
     const { moduleId, title } = await req.json();
     if (!moduleId || !title) {
       return NextResponse.json({ error: 'moduleId y title son requeridos' }, { status: 400 });
+    }
+
+    const courseId = await getCourseIdForModule(moduleId);
+    if (!courseId || !(await isCourseEditor(user.id, courseId))) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
     const module = await prisma.module.update({
@@ -28,14 +34,19 @@ export async function PUT(req: Request) {
 
 export async function DELETE(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== 'ADMIN') {
+    const user = await getCurrentUser();
+    if (!user) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
     const { moduleId } = await req.json();
     if (!moduleId) {
       return NextResponse.json({ error: 'moduleId es requerido' }, { status: 400 });
+    }
+
+    const courseId = await getCourseIdForModule(moduleId);
+    if (!courseId || !(await isCourseEditor(user.id, courseId))) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
     await prisma.module.delete({ where: { id: moduleId } });
@@ -47,9 +58,8 @@ export async function DELETE(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session || (session.user as any).role !== 'ADMIN') {
+    const user = await getCurrentUser();
+    if (!user) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
@@ -60,6 +70,10 @@ export async function POST(req: Request) {
         { error: 'Título y courseId son requeridos' },
         { status: 400 }
       );
+    }
+
+    if (!(await isCourseEditor(user.id, courseId))) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
     const existingModules = await prisma.module.count({

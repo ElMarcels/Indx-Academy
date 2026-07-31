@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { getCurrentUser, isCourseEditor } from '@/lib/permissions';
 
 export async function GET(
   req: Request,
@@ -37,7 +38,22 @@ export async function GET(
       return NextResponse.json({ error: 'Curso no encontrado' }, { status: 404 });
     }
 
-    return NextResponse.json(course);
+    let canEdit = false;
+    try {
+      const session = await getServerSession(authOptions);
+      if (session?.user?.email) {
+        const user = await prisma.user.findUnique({
+          where: { email: session.user.email },
+        });
+        if (user) {
+          canEdit = await isCourseEditor(user.id, course.id);
+        }
+      }
+    } catch {
+      canEdit = false;
+    }
+
+    return NextResponse.json({ ...course, canEdit });
   } catch (error) {
     return NextResponse.json({ error: 'Error al cargar curso' }, { status: 500 });
   }
@@ -48,9 +64,12 @@ export async function PUT(
   { params }: { params: { courseId: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
 
-    if (!session || (session.user as any).role !== 'ADMIN') {
+    if (!(await isCourseEditor(user.id, params.courseId))) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 

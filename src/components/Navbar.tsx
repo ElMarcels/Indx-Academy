@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiMenu, FiX, FiUser, FiLogOut, FiShield, FiStar, FiUsers, FiMessageSquare, FiUserPlus, FiBook,
-  FiLayers, FiGlobe,
+  FiLayers, FiGlobe, FiEdit3,
 } from 'react-icons/fi';
 import { Notifications } from '@/components/Notifications';
 
@@ -77,6 +77,15 @@ export function Navbar() {
                 <span className="flex items-center gap-1.5">
                   <FiShield size={13} />
                   Admin
+                </span>
+              </NavLink>
+            )}
+
+            {(session?.user as any)?.role !== 'ADMIN' && (session?.user as any)?.isTeacher && (
+              <NavLink href="/admin/courses" accent>
+                <span className="flex items-center gap-1.5">
+                  <FiEdit3 size={13} />
+                  Mis Cursos
                 </span>
               </NavLink>
             )}
@@ -173,6 +182,11 @@ export function Navbar() {
                     {(session.user as any)?.role === 'ADMIN' && (
                       <Link href="/admin" className="flex items-center gap-2.5 text-accent-400 hover:text-accent-300 py-2.5 px-3 text-sm rounded-xl hover:bg-accent-500/10 transition-all" onClick={() => setMobileOpen(false)}>
                         <FiShield size={15} /> Panel Admin
+                      </Link>
+                    )}
+                    {(session.user as any)?.role !== 'ADMIN' && (session.user as any)?.isTeacher && (
+                      <Link href="/admin/courses" className="flex items-center gap-2.5 text-accent-400 hover:text-accent-300 py-2.5 px-3 text-sm rounded-xl hover:bg-accent-500/10 transition-all" onClick={() => setMobileOpen(false)}>
+                        <FiEdit3 size={15} /> Mis Cursos
                       </Link>
                     )}
                     <div className="border-t border-dark-800/40 my-2" />

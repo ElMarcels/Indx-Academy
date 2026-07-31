@@ -1,16 +1,18 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getCurrentUser, isCourseEditor } from '@/lib/permissions';
 
 export async function POST(
   req: Request,
   { params }: { params: { courseId: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
 
-    if (!session || (session.user as any).role !== 'ADMIN') {
+    if (!(await isCourseEditor(user.id, params.courseId))) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 

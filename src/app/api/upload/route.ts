@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { getCurrentUser, isCourseEditor, getCourseIdForLesson } from '@/lib/permissions';
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if ((session?.user as any)?.role !== 'ADMIN') {
+  const user = await getCurrentUser();
+  if (!user) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
 
@@ -16,6 +15,11 @@ export async function POST(req: NextRequest) {
 
     if (!file || !lessonId) {
       return NextResponse.json({ error: 'Falta archivo o lessonId' }, { status: 400 });
+    }
+
+    const courseId = await getCourseIdForLesson(lessonId);
+    if (!courseId || !(await isCourseEditor(user.id, courseId))) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
     const bytes = await file.arrayBuffer();

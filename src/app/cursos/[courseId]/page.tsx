@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
   FiCheck, FiClock, FiLock, FiBookOpen, FiUsers,
-  FiBarChart2, FiArrowLeft, FiArrowRight, FiFileText, FiStar,
+  FiBarChart2, FiArrowLeft, FiArrowRight, FiFileText, FiStar, FiEdit2,
 } from 'react-icons/fi';
 import { ProgressBar } from '@/components/ProgressBar';
 import { CourseProgress } from '@/components/CourseProgress';
@@ -39,6 +39,7 @@ interface Course {
     }[];
   }[];
   _count: { enrollments: number };
+  canEdit?: boolean;
 }
 
 const levelLabels: Record<string, string> = {
@@ -329,6 +330,16 @@ export default function CursoPage() {
                       </>
                     )}
                   </button>
+                )}
+
+                {course.canEdit && (
+                  <Link
+                    href={`/admin/courses/${course.id}`}
+                    className="btn-secondary w-full flex items-center justify-center gap-2 mt-3"
+                  >
+                    <FiEdit2 size={16} />
+                    Editar Curso
+                  </Link>
                 )}
 
                 <div className="mt-6 space-y-3">
