@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
   FiCheck, FiClock, FiLock, FiBookOpen, FiUsers,
-  FiBarChart2, FiArrowLeft, FiArrowRight, FiFileText, FiStar, FiEdit2,
+  FiBarChart2, FiArrowLeft, FiArrowRight, FiFileText, FiStar, FiEdit2, FiAward,
 } from 'react-icons/fi';
 import { ProgressBar } from '@/components/ProgressBar';
 import { CourseProgress } from '@/components/CourseProgress';
@@ -58,6 +58,7 @@ export default function CursoPage() {
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
+  const [grade, setGrade] = useState<{ score: number | null; grade: { label: string; color: string } | null; quizCount: number } | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -88,6 +89,10 @@ export default function CursoPage() {
       fetch(`/api/progress?courseId=${course.id}`)
         .then((r) => r.json())
         .then((data) => setProgress(data));
+
+      fetch(`/api/courses/${course.id}/grades`)
+        .then((r) => r.ok ? r.json() : null)
+        .then((data) => { if (data) setGrade(data); });
     }
   }, [course, session]);
 
@@ -215,6 +220,20 @@ export default function CursoPage() {
                 <h3 className="text-white font-semibold mb-3">Tu Progreso</h3>
                 <ProgressBar current={completedCount} total={totalLessons} size="lg" />
               </motion.div>
+            )}
+
+            {enrolled && (
+              <div className="card p-5 mb-6 flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center"><FiAward className="text-amber-400" /></div>
+                <div>
+                  <h3 className="text-white font-semibold text-sm">Calificación del curso</h3>
+                  {grade?.score === null || !grade ? (
+                    <p className="text-dark-400 text-xs mt-1">Completa algún quiz para obtener tu calificación.</p>
+                  ) : (
+                    <p className="text-dark-300 text-xs mt-1">{grade.score}/100 · <span className="text-white font-medium">{grade.grade?.label || 'Sin escala'}</span> · Basada en {grade.quizCount} quiz{grade.quizCount === 1 ? '' : 'zes'}.</p>
+                  )}
+                </div>
+              </div>
             )}
 
             {/* Modules */}

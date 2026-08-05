@@ -228,6 +228,23 @@ model Course {
   surveys     Survey[]
   teachers    CourseTeacher[]
   flashcards  CourseFlashcard[]
+  gradingScale GradingScale?
+}
+
+// ─── Grading ────────────────────────────────────────────
+
+model GradingScale {
+  id        String   @id @default(cuid())
+  name      String
+  isGlobal  Boolean  @default(false)
+  courseId  String?  @unique
+  ranges    String   // JSON: [{ label, min, max, color }]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  course Course? @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([isGlobal])
 }
 
 model Module {

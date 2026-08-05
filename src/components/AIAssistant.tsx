@@ -9,7 +9,7 @@ import remarkGfm from 'remark-gfm';
 import {
   FiMessageSquare, FiX, FiSend, FiLoader, FiPlus, FiChevronDown, FiTrash2, FiBook,
   FiShield, FiFileText, FiHelpCircle, FiCode, FiTarget, FiLayers, FiBookOpen, FiGrid,
-  FiUsers, FiArrowLeft, FiCheck,
+  FiUsers, FiArrowLeft, FiCheck, FiUpload,
 } from 'react-icons/fi';
 
 interface AIMessage {
@@ -82,8 +82,8 @@ export function IndxAI() {
   const [loadingConversations, setLoadingConversations] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Admin mode state
-  const [adminMode, setAdminMode] = useState(false);
+  // AI modes: content generation stays available to admins, alongside a private admin chat.
+  const [aiMode, setAiMode] = useState<'normal' | 'content' | 'admin'>('normal');
   const [selectedContentType, setSelectedContentType] = useState<ContentType>('lesson_content');
   const [showContentTypeSelector, setShowContentTypeSelector] = useState(false);
   const [adminModules, setAdminModules] = useState<ModuleOption[]>([]);
@@ -94,7 +94,9 @@ export function IndxAI() {
   const [generatedContent, setGeneratedContent] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
 
-  // Staff contact state
+  const [attachment, setAttachment] = useState<{ name: string; mimeType: string; data: string } | null>(null);
+  // Kept only for backwards compatibility with an already-open legacy panel;
+  // the visible menu now routes exclusively to the full ticket system.
   const [contactSubject, setContactSubject] = useState('');
   const [contactMessage, setContactMessage] = useState('');
   const [sendingContact, setSendingContact] = useState(false);
@@ -116,7 +118,7 @@ export function IndxAI() {
   }, [messages, scrollToBottom]);
 
   useEffect(() => {
-    if (selectedCourseId && adminMode) {
+    if (selectedCourseId && aiMode === 'content') {
       loadModules(selectedCourseId);
     } else {
       setAdminModules([]);
@@ -124,7 +126,7 @@ export function IndxAI() {
       setAdminLessons([]);
       setSelectedLessonId(null);
     }
-  }, [selectedCourseId, adminMode]);
+  }, [selectedCourseId, aiMode]);
 
   useEffect(() => {
     if (selectedModuleId) {
@@ -205,7 +207,7 @@ export function IndxAI() {
   }
 
   async function sendMessage() {
-    if (!input.trim() || sending) return;
+    if ((!input.trim() && !attachment) || sending) return;
     const userMsg = input.trim();
     setInput('');
     setSending(true);
@@ -219,13 +221,11 @@ export function IndxAI() {
     setMessages((prev) => [...prev, tempUserMsg]);
 
     try {
-      const res = await fetch('/api/ai/chat', {
+      const res = await fetch(aiMode === 'admin' ? '/api/ai/admin-chat' : '/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: userMsg,
-          conversationId: activeConversation,
-          courseId: selectedCourseId,
+        body: JSON.stringify(aiMode === 'admin' ? { message: userMsg, attachment } : {
+          message: userMsg, conversationId: activeConversation, courseId: selectedCourseId,
         }),
       });
 
@@ -234,9 +234,12 @@ export function IndxAI() {
         setMessages((prev) => [
           ...prev.filter((m) => !m.id.startsWith('temp-')),
           { id: `u-${Date.now()}`, role: 'user', content: userMsg, createdAt: new Date().toISOString() },
-          data.message,
+          aiMode === 'admin'
+            ? { id: `a-${Date.now()}`, role: 'assistant', content: data.content, createdAt: new Date().toISOString() }
+            : data.message,
         ]);
-        if (!activeConversation && data.conversationId) {
+        setAttachment(null);
+        if (aiMode !== 'admin' && !activeConversation && data.conversationId) {
           setActiveConversation(data.conversationId);
           loadConversations();
         }
@@ -250,6 +253,14 @@ export function IndxAI() {
     } finally {
       setSending(false);
     }
+  }
+
+  function selectAttachment(file?: File) {
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) { toast.error('El archivo no puede superar 8 MB'); return; }
+    const reader = new FileReader();
+    reader.onload = () => setAttachment({ name: file.name, mimeType: file.type || 'application/octet-stream', data: String(reader.result).split(',')[1] });
+    reader.readAsDataURL(file);
   }
 
   async function generateAdminContent() {
@@ -384,20 +395,21 @@ export function IndxAI() {
             </div>
 
             <div className="p-3 space-y-2">
-              <button
-                onClick={() => setSelectedOption('staff')}
-                className="w-full text-left px-4 py-3 rounded-xl bg-dark-800/50 border border-dark-700/50 hover:border-brand-500/30 hover:bg-dark-800 transition-all group"
+              <Link
+                href="/soporte"
+                onClick={() => setIsOpen(false)}
+                className="block w-full text-left px-4 py-3 rounded-xl bg-dark-800/50 border border-dark-700/50 hover:border-brand-500/30 hover:bg-dark-800 transition-all group"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500/20 to-blue-500/20 border border-brand-500/20 flex items-center justify-center flex-shrink-0 group-hover:border-brand-500/40 transition-colors">
                     <FiUsers size={18} className="text-brand-400" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white group-hover:text-brand-400 transition-colors">Contacto con el Staff</p>
-                    <p className="text-[10px] text-dark-500">Envía un mensaje al equipo de la plataforma</p>
+                    <p className="text-sm font-medium text-white group-hover:text-brand-400 transition-colors">Tickets de soporte</p>
+                    <p className="text-[10px] text-dark-500">Consulta y gestiona tus tickets</p>
                   </div>
                 </div>
-              </button>
+              </Link>
 
               <button
                 onClick={() => setSelectedOption('ia')}
@@ -532,11 +544,11 @@ export function IndxAI() {
                 <FiArrowLeft size={14} />
               </button>
               <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-                adminMode
+                aiMode !== 'normal'
                   ? 'bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/20'
                   : 'bg-gradient-to-br from-brand-500/20 to-accent-500/20 border border-brand-500/20'
               }`}>
-                {adminMode ? (
+                {aiMode !== 'normal' ? (
                   <FiShield size={16} className="text-amber-400" />
                 ) : (
                   <FiMessageSquare size={16} className="text-brand-400" />
@@ -545,29 +557,26 @@ export function IndxAI() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <h3 className="text-sm font-semibold text-white">IndxAI</h3>
-                  {adminMode && (
+                  {aiMode !== 'normal' && (
                     <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-medium border border-amber-500/20">
                       ADMIN
                     </span>
                   )}
                 </div>
                 <p className="text-[10px] text-dark-500">
-                  {adminMode ? 'Modo generación de contenido' : 'Asistente IA potenciado por Gemma 4'}
+                  {aiMode === 'content' ? 'Generación de contenido' : aiMode === 'admin' ? 'Chat administrativo privado' : 'Asistente de aprendizaje'}
                 </p>
               </div>
-              {isAdmin && (
-                <button
-                  onClick={() => { setAdminMode(!adminMode); setShowPreview(false); setGeneratedContent(null); }}
-                  className={`p-1.5 rounded-lg transition-colors ${
-                    adminMode
-                      ? 'text-amber-400 bg-amber-500/10 hover:bg-amber-500/20'
-                      : 'text-dark-400 hover:text-amber-400 hover:bg-dark-800/50'
-                  }`}
-                  title={adminMode ? 'Volver al modo chat' : 'Modo administrador'}
-                >
-                  <FiShield size={14} />
-                </button>
-              )}
+              <select
+                value={aiMode}
+                onChange={(e) => { const next = e.target.value as 'normal' | 'content' | 'admin'; setAiMode(next); setShowPreview(false); setGeneratedContent(null); setAttachment(null); }}
+                className="bg-dark-800 border border-dark-700 rounded-lg px-2 py-1 text-[10px] text-dark-200 focus:outline-none"
+                aria-label="Modo de IndxAI"
+              >
+                <option value="normal">Aprendizaje</option>
+                {isAdmin && <option value="content">Generar contenido</option>}
+                {isAdmin && <option value="admin">Admin privado</option>}
+              </select>
               <button
                 onClick={() => setShowConversations(!showConversations)}
                 className="p-1.5 rounded-lg text-dark-400 hover:text-white hover:bg-dark-800/50 transition-colors"
@@ -584,7 +593,7 @@ export function IndxAI() {
 
             {/* Conversations panel */}
             <AnimatePresence>
-              {showConversations && !adminMode && (
+              {showConversations && aiMode === 'normal' && (
                 <motion.div
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
@@ -633,7 +642,7 @@ export function IndxAI() {
             </AnimatePresence>
 
             {/* Admin mode: Content type selector */}
-            {adminMode && (
+            {aiMode === 'content' && (
               <div className="px-4 py-2 border-b border-dark-800/30 space-y-2">
                 {/* Course selector */}
                 {courses.length > 0 && (
@@ -709,7 +718,7 @@ export function IndxAI() {
             {/* Messages / Preview area */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {/* Empty state */}
-              {messages.length === 0 && !adminMode && (
+              {messages.length === 0 && aiMode !== 'content' && (
                 <div className="text-center py-8">
                   <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-500/10 to-accent-500/10 border border-brand-500/10 flex items-center justify-center mx-auto mb-3">
                     <FiMessageSquare size={20} className="text-brand-400/50" />
@@ -721,7 +730,7 @@ export function IndxAI() {
               )}
 
               {/* Admin empty state */}
-              {adminMode && !showPreview && (
+              {aiMode === 'content' && !showPreview && (
                 <div className="text-center py-8">
                   <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/10 flex items-center justify-center mx-auto mb-3">
                     <FiShield size={20} className="text-amber-400/50" />
@@ -822,6 +831,16 @@ export function IndxAI() {
 
             {/* Input area */}
             <div className="p-3 border-t border-dark-800/50">
+              {aiMode === 'admin' && (
+                <div className="flex items-center gap-2 mb-2 text-[10px] text-dark-400">
+                  <label className="cursor-pointer inline-flex items-center gap-1.5 text-amber-400 hover:text-amber-300">
+                    <FiUpload size={12} /> Adjuntar archivo
+                    <input type="file" className="hidden" accept="image/*,.pdf,.txt,.md,.csv,.json" onChange={(e) => selectAttachment(e.target.files?.[0])} />
+                  </label>
+                  {attachment && <span className="truncate flex-1">{attachment.name}</span>}
+                  {attachment && <button onClick={() => setAttachment(null)} className="text-dark-500 hover:text-red-400">Quitar</button>}
+                </div>
+              )}
               <div className="flex gap-2 items-end">
                 <textarea
                   value={input}
@@ -829,26 +848,23 @@ export function IndxAI() {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
-                      if (adminMode && !showPreview) {
+                      if (aiMode === 'content' && !showPreview) {
                         generateAdminContent();
-                      } else if (!adminMode) {
+                      } else if (aiMode !== 'content') {
                         sendMessage();
                       }
                     }
                   }}
-                  placeholder={adminMode
-                    ? (showPreview ? 'Genera otro contenido...' : 'Describe qué contenido generar...')
-                    : 'Pregúntale a IndxAI...'
-                  }
+                  placeholder={aiMode === 'content' ? (showPreview ? 'Genera otro contenido...' : 'Describe qué contenido generar...') : aiMode === 'admin' ? 'Consulta o pide evaluar un archivo...' : 'Pregúntale a IndxAI...'}
                   className="flex-1 bg-dark-800/50 border border-dark-700/50 rounded-xl px-3 py-2 text-sm text-white placeholder-dark-500 focus:outline-none focus:border-brand-500/50 resize-none"
                   rows={1}
                   disabled={sending || generating}
                 />
                 <button
-                  onClick={adminMode ? generateAdminContent : sendMessage}
-                  disabled={!input.trim() || sending || generating}
+                  onClick={aiMode === 'content' ? generateAdminContent : sendMessage}
+                  disabled={(!input.trim() && !(aiMode === 'admin' && attachment)) || sending || generating}
                   className={`p-2 rounded-xl disabled:opacity-30 transition-colors flex-shrink-0 ${
-                    adminMode
+                    aiMode === 'content'
                       ? 'bg-amber-600 hover:bg-amber-500 text-white'
                       : 'bg-brand-600 hover:bg-brand-500 text-white'
                   }`}

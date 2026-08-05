@@ -13,7 +13,7 @@ export function PlatformGate({ children }: { children: React.ReactNode }) {
   const [closed, setClosed] = useState<boolean | null>(null);
 
   useEffect(() => {
-    fetch('/api/platform-status')
+    fetch('/api/platform-status', { cache: 'no-store' })
       .then((r) => r.json())
       .then((d) => setClosed(!!d.closed))
       .catch(() => setClosed(false));
@@ -25,6 +25,10 @@ export function PlatformGate({ children }: { children: React.ReactNode }) {
   const isAllowedPath = ALLOWED_PATHS.some(
     (p) => pathname === p || pathname.startsWith(p + '/')
   );
+
+  // Wait for the session before deciding access so an administrator is never
+  // briefly locked out after closing the platform.
+  if (closed && session === undefined) return <>{children}</>;
 
   if (closed && !isAdmin && !isAllowedPath) {
     return (

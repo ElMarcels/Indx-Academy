@@ -3,6 +3,7 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
@@ -92,8 +93,12 @@ export default function AdminPage() {
       if (res.ok) {
         const data = await res.json();
         setPlatformClosed(!!data.closed);
+        toast.success(data.closed ? 'Plataforma cerrada correctamente' : 'Plataforma abierta correctamente');
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || 'No se pudo cambiar el estado de la plataforma');
       }
-    } catch { /* silent */ } finally {
+    } catch { toast.error('Error de conexión al cambiar el estado'); } finally {
       setTogglingPlatform(false);
     }
   }
@@ -281,6 +286,7 @@ export default function AdminPage() {
             { href: '/admin/users', title: 'Usuarios', desc: 'Ver todos los usuarios' },
             { href: '/admin/reports', title: 'Moderación', desc: 'Reportes pendientes', icon: FiFlag },
             { href: '/admin/support', title: 'Soporte', desc: 'Tickets de usuarios', icon: FiMail },
+            { href: '/admin/calificaciones', title: 'Calificaciones', desc: 'Escalas globales y por curso', icon: FiAward },
           ].map((link, i) => (
             <motion.div
               key={link.href}
